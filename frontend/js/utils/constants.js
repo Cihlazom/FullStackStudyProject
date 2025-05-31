@@ -106,7 +106,7 @@ const CONSTANTS = {
     IMAGE: {
         MAX_SIZE: 5 * 1024 * 1024, // 5MB
         ALLOWED_TYPES: ['image/jpeg', 'image/png', 'image/webp'],
-        PLACEHOLDER: '/assets/images/placeholder.jpg'
+        PLACEHOLDER: 'assets/images/placeholder.jpg'
     },
 
     // Animation Durations (in ms)

@@ -1,9 +1,10 @@
-// Main Application for Barcelona Local Platform
+// Updated App.js with real API integration
 const App = {
     // Application state
     state: {
         currentPage: 'home',
         venues: [],
+        events: [],
         isLoading: false,
         filters: {
             type: '',
@@ -88,132 +89,127 @@ const App = {
         }
     },
 
-    // Load venues with current filters
+    // Load venues with current filters - NOW USING REAL API
     async loadVenues(append = false) {
         try {
-            // Mock API call - replace with real API when backend is ready
-            const mockVenues = [
-                {
-                    id: 1,
-                    name: 'Bar Central',
-                    type: 'bar',
-                    district: 'Eixample',
-                    rating: 4.5,
-                    priceRange: 'moderate',
-                    image: 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=400',
-                    description: 'Cozy bar in the heart of Eixample with great cocktails and atmosphere.',
-                    distance: 0.8
-                },
-                {
-                    id: 2,
-                    name: 'Café del Born',
-                    type: 'cafe',
-                    district: 'Ciutat Vella',
-                    rating: 4.3,
-                    priceRange: 'budget',
-                    image: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=400',
-                    description: 'Traditional café with amazing coffee and local pastries.',
-                    distance: 1.2
-                },
-                {
-                    id: 3,
-                    name: 'Gràcia Tapas',
-                    type: 'restaurant',
-                    district: 'Gràcia',
-                    rating: 4.7,
-                    priceRange: 'moderate',
-                    image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400',
-                    description: 'Authentic tapas in the bohemian neighborhood of Gràcia.',
-                    distance: 2.1
-                },
-                {
-                    id: 4,
-                    name: 'Rooftop Sky',
-                    type: 'bar',
-                    district: 'Eixample',
-                    rating: 4.6,
-                    priceRange: 'expensive',
-                    image: 'https://images.unsplash.com/photo-1566417109403-c9bbcb2ebd91?w=400',
-                    description: 'Amazing rooftop bar with panoramic city views.',
-                    distance: 0.5
-                },
-                {
-                    id: 5,
-                    name: 'Student Hub',
-                    type: 'coworking',
-                    district: 'Sarrià-Sant Gervasi',
-                    rating: 4.4,
-                    priceRange: 'budget',
-                    image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=400',
-                    description: 'Perfect coworking space for students and digital nomads.',
-                    distance: 1.8
-                },
-                {
-                    id: 6,
-                    name: 'Picasso Museum Café',
-                    type: 'cafe',
-                    district: 'Ciutat Vella',
-                    rating: 4.2,
-                    priceRange: 'moderate',
-                    image: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=400',
-                    description: 'Charming café near the famous Picasso Museum.',
-                    distance: 1.4
-                }
-            ];
+            const params = new URLSearchParams();
 
-            // Apply filters
-            let filteredVenues = mockVenues;
-
+            // Add filters to API request
             if (this.state.filters.type) {
-                filteredVenues = filteredVenues.filter(venue => venue.type === this.state.filters.type);
+                params.append('type', this.state.filters.type);
             }
-
             if (this.state.filters.district) {
-                filteredVenues = filteredVenues.filter(venue => venue.district === this.state.filters.district);
+                params.append('district', this.state.filters.district);
             }
-
             if (this.state.filters.priceRange) {
-                filteredVenues = filteredVenues.filter(venue => venue.priceRange === this.state.filters.priceRange);
+                params.append('priceRange', this.state.filters.priceRange);
             }
 
-            // Update state
-            if (append) {
-                this.state.venues = [...this.state.venues, ...filteredVenues];
-            } else {
-                this.state.venues = filteredVenues;
+            // Add pagination
+            params.append('page', this.state.pagination.page);
+            params.append('limit', this.state.pagination.limit);
+
+            // Make API request to your PHP backend
+            const response = await fetch(`${CONFIG.API.BASE_URL}/venues?${params}`);
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
+
+            const data = await response.json();
+
+            if (!data.success) {
+                throw new Error(data.message || 'Failed to fetch venues');
+            }
+
+            // Update state with real data
+            if (append) {
+                this.state.venues = [...this.state.venues, ...data.data];
+            } else {
+                this.state.venues = data.data;
+            }
+
+            // Update pagination state
+            this.state.pagination.hasMore = data.page * data.limit < data.total;
 
             // Render venues
             if (append) {
-                VenueCard.append(filteredVenues, 'results-container');
+                VenueCard.append(data.data, 'results-container');
             } else {
                 VenueCard.render(this.state.venues, 'results-container');
             }
 
             // Update results title
-            this.updateResultsTitle();
+            this.updateResultsTitle(data.total);
 
             // Show/hide load more button
             this.updateLoadMoreButton();
 
+            console.log(`📍 Loaded ${data.data.length} venues from API`);
+
         } catch (error) {
             console.error('Error loading venues:', error);
-            Helpers.UI.showToast('Failed to load venues', CONSTANTS.TOAST_TYPES.ERROR);
+
+            // Show user-friendly error message
+            Helpers.UI.showToast(
+                'Unable to load venues. Please check your connection.',
+                CONSTANTS.TOAST_TYPES.ERROR
+            );
+
+            // Show empty state in UI
+            const container = Helpers.DOM.get('results-container');
+            if (container) {
+                container.innerHTML = `
+                    <div class="error-state">
+                        <div class="error-icon">⚠️</div>
+                        <h3>Unable to load venues</h3>
+                        <p>Please check your internet connection and try again.</p>
+                        <button class="btn btn-primary" onclick="App.loadVenues()">Retry</button>
+                    </div>
+                `;
+            }
         }
     },
 
-    // Update results title
-    updateResultsTitle() {
+    // Load events - NOW USING REAL API
+    async loadEvents() {
+        try {
+            const response = await fetch(`${CONFIG.API.BASE_URL}/${CONFIG.API.ENDPOINTS.EVENTS.LIST}`);
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            if (!data.success) {
+                throw new Error(data.message || 'Failed to fetch events');
+            }
+
+            this.state.events = data.data;
+
+            console.log(`🎉 Loaded ${data.data.length} events from API`);
+            return data.data;
+
+        } catch (error) {
+            console.error('Error loading events:', error);
+            Helpers.UI.showToast('Failed to load events', CONSTANTS.TOAST_TYPES.ERROR);
+            return [];
+        }
+    },
+
+    // Update results title with real count
+    updateResultsTitle(totalCount = null) {
         const titleElement = Helpers.DOM.get('results-title');
         if (!titleElement) return;
 
-        const count = this.state.venues.length;
+        const count = totalCount || this.state.venues.length;
         const hasFilters = Object.values(this.state.filters).some(filter => filter);
 
         if (hasFilters) {
             titleElement.textContent = `Found ${count} place${count !== 1 ? 's' : ''}`;
         } else {
-            titleElement.textContent = 'Popular Places';
+            titleElement.textContent = `${count} Popular Places`;
         }
     },
 
@@ -222,11 +218,10 @@ const App = {
         const loadMoreSection = document.querySelector('.load-more');
         if (!loadMoreSection) return;
 
-        // For demo purposes, hide after showing some venues
-        if (this.state.venues.length >= 6) {
-            loadMoreSection.style.display = 'none';
-        } else {
+        if (this.state.pagination.hasMore) {
             loadMoreSection.style.display = 'block';
+        } else {
+            loadMoreSection.style.display = 'none';
         }
     },
 
@@ -303,26 +298,81 @@ const App = {
 
     // Load more venues
     async loadMoreVenues() {
+        if (!this.state.pagination.hasMore || this.state.isLoading) {
+            return;
+        }
+
         this.state.pagination.page++;
-        await this.loadVenues(true);
+        this.state.isLoading = true;
+
+        const loadMoreBtn = Helpers.DOM.get('load-more-btn');
+        if (loadMoreBtn) {
+            loadMoreBtn.textContent = 'Loading...';
+            loadMoreBtn.disabled = true;
+        }
+
+        try {
+            await this.loadVenues(true);
+        } finally {
+            this.state.isLoading = false;
+            if (loadMoreBtn) {
+                loadMoreBtn.textContent = 'Load More';
+                loadMoreBtn.disabled = false;
+            }
+        }
     },
 
     // Apply filters
-    applyFilters(filters) {
+    async applyFilters(filters) {
         this.state.filters = { ...this.state.filters, ...filters };
         this.state.pagination.page = 1;
-        this.loadVenues();
+
+        Helpers.UI.showLoading();
+        await this.loadVenues();
+        Helpers.UI.hideLoading();
     },
 
     // Clear all filters
-    clearFilters() {
+    async clearFilters() {
         this.state.filters = {
             type: '',
             district: '',
             priceRange: '',
             rating: 0
         };
-        this.loadVenues();
+        this.state.pagination.page = 1;
+
+        Helpers.UI.showLoading();
+        await this.loadVenues();
+        Helpers.UI.hideLoading();
+    },
+
+    // Test API connection
+    async testAPIConnection() {
+        try {
+            console.log('🔍 Testing API connection...');
+
+            // Test venues endpoint
+            const venuesResponse = await fetch(`${CONFIG.API.BASE_URL}/venues?limit=1`);
+            console.log('Venues API status:', venuesResponse.status);
+
+            // Test events endpoint
+            const eventsResponse = await fetch(`${CONFIG.API.BASE_URL}/events`);
+            console.log('Events API status:', eventsResponse.status);
+
+            if (venuesResponse.ok && eventsResponse.ok) {
+                console.log('✅ API connection successful');
+                Helpers.UI.showToast('Connected to server!', CONSTANTS.TOAST_TYPES.SUCCESS);
+                return true;
+            } else {
+                throw new Error('API endpoints not responding correctly');
+            }
+
+        } catch (error) {
+            console.error('❌ API connection failed:', error);
+            Helpers.UI.showToast('Server connection failed', CONSTANTS.TOAST_TYPES.ERROR);
+            return false;
+        }
     },
 
     // Bind global events
@@ -335,6 +385,8 @@ const App = {
         // Handle online/offline status
         window.addEventListener('online', () => {
             Helpers.UI.showToast('Connection restored', CONSTANTS.TOAST_TYPES.SUCCESS);
+            // Reload data when back online
+            this.loadVenues();
         });
 
         window.addEventListener('offline', () => {
@@ -378,6 +430,7 @@ const App = {
         logAppInfo() {
             console.log('%c🏛️ Barcelona Local Platform', 'font-size: 20px; color: #667eea;');
             console.log('Version:', CONFIG.APP.VERSION);
+            console.log('API URL:', CONFIG.API.BASE_URL);
             console.log('Environment:', CONFIG.API.BASE_URL.includes('localhost') ? 'Development' : 'Production');
             console.log('User authenticated:', Storage.Auth.isAuthenticated());
             console.log('Favorites count:', Storage.Favorites.getCount());
@@ -389,6 +442,11 @@ const App = {
 document.addEventListener('DOMContentLoaded', () => {
     App.init();
     App.utils.logAppInfo();
+
+    // Test API connection on startup
+    setTimeout(() => {
+        App.testAPIConnection();
+    }, 1000);
 });
 
 // Make App globally available for debugging

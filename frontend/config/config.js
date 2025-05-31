@@ -13,13 +13,13 @@ const CONFIG = {
             },
             VENUES: {
                 LIST: '/venues',
-                DETAILS: '/venues/:id',
+                DETAILS: (id) =>  `/venues/${id}`,
                 SEARCH: '/venues/search',
                 REVIEWS: '/venues/:id/reviews',
                 FAVORITES: '/venues/favorites'
             },
             EVENTS: {
-                LIST: '/events',
+                LIST: 'events',
                 DETAILS: '/events/:id',
                 SEARCH: '/events/search',
                 UPCOMING: '/events/upcoming'

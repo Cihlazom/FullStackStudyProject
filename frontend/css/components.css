@@ -609,6 +609,127 @@
     margin-top: var(--spacing-8);
 }
 
+/* Error states */
+.error-state {
+    text-align: center;
+    padding: var(--spacing-16) var(--spacing-8);
+    color: var(--gray-600);
+}
+
+.error-icon {
+    font-size: 4rem;
+    margin-bottom: var(--spacing-4);
+    opacity: 0.7;
+}
+
+.error-state h3 {
+    color: var(--gray-800);
+    margin-bottom: var(--spacing-3);
+}
+
+.error-state p {
+    margin-bottom: var(--spacing-6);
+    opacity: 0.8;
+}
+
+/* Reviews section */
+.reviews-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-4);
+    margin-bottom: var(--spacing-6);
+}
+
+.review-item {
+    background: var(--gray-50);
+    padding: var(--spacing-4);
+    border-radius: var(--radius-md);
+    border-left: 3px solid var(--primary-color);
+}
+
+.review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-2);
+}
+
+.reviewer-name {
+    font-weight: var(--font-weight-medium);
+    color: var(--gray-800);
+}
+
+.review-rating {
+    font-size: var(--font-size-sm);
+}
+
+.review-text {
+    color: var(--gray-700);
+    line-height: 1.5;
+    margin-bottom: var(--spacing-2);
+}
+
+.review-date {
+    font-size: var(--font-size-xs);
+    color: var(--gray-500);
+}
+
+/* Loading states */
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.btn:disabled:hover {
+    transform: none;
+}
+
+/* API status indicators */
+.api-status {
+    position: fixed;
+    top: calc(var(--header-height) + var(--spacing-2));
+    right: var(--spacing-4);
+    background: var(--success-color);
+    color: var(--white);
+    padding: var(--spacing-2) var(--spacing-3);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+    z-index: var(--z-toast);
+    display: none;
+}
+
+.api-status.error {
+    background: var(--error-color);
+}
+
+.api-status.warning {
+    background: var(--warning-color);
+}
+
+/* Enhanced venue cards for real data */
+.venue-card .venue-description {
+    min-height: 3em; /* Ensure consistent card heights */
+}
+
+/* Empty features handling */
+.features-list:empty::after {
+    content: "No special features listed";
+    color: var(--gray-500);
+    font-style: italic;
+    font-size: var(--font-size-sm);
+}
+
+/* Hours display improvements */
+.hours-item .hours {
+    font-family: monospace;
+    font-size: var(--font-size-sm);
+}
+
+.hours-item .day {
+    min-width: 80px;
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
     .nav-menu {
@@ -687,6 +808,7 @@
         gap: var(--spacing-2);
     }
 
+    /* ERROR PAGE */
     .error-page h1 {
         font-size: 5rem;
     }
@@ -694,5 +816,26 @@
     .error-actions {
         flex-direction: column;
         align-items: center;
+    }
+
+    /* API */
+    .review-header {
+        flex-direction: column;
+        align-items: start;
+        gap: var(--spacing-1);
+    }
+
+    .error-state {
+        padding: var(--spacing-12) var(--spacing-4);
+    }
+
+    .error-icon {
+        font-size: 3rem;
+    }
+
+    .api-status {
+        right: var(--spacing-2);
+        left: var(--spacing-2);
+        text-align: center;
     }
 }

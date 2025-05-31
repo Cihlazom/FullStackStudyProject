@@ -1,9 +1,9 @@
-// Venue Card Component for Barcelona Local Platform
+// Updated Venue Card Component for real API data
 const VenueCard = {
     // Create a venue card HTML
     create(venue) {
         const isFavorite = Storage.Favorites.isFavorite(venue.id);
-        const priceSymbol = this.getPriceSymbol(venue.priceRange);
+        const priceSymbol = this.getPriceSymbol(venue.price_range || venue.priceRange);
         const distanceText = venue.distance ? Helpers.Utils.formatDistance(venue.distance) : '';
 
         return `
@@ -38,11 +38,11 @@ const VenueCard = {
             
             <div class="venue-price">
               <span class="price-range">${priceSymbol}</span>
-              <span class="price-label">${Helpers.String.capitalize(venue.priceRange)}</span>
+              <span class="price-label">${Helpers.String.capitalize(venue.price_range || venue.priceRange || 'moderate')}</span>
             </div>
           </div>
           
-          <p class="venue-description">${Helpers.String.truncate(venue.description, 80)}</p>
+          <p class="venue-description">${Helpers.String.truncate(venue.description || 'No description available', 80)}</p>
           
           <div class="venue-actions">
             <button class="btn btn-primary btn-sm view-details-btn" data-venue-id="${venue.id}">
@@ -75,8 +75,9 @@ const VenueCard = {
 
     // Create star rating HTML
     createStars(rating) {
-        const fullStars = Math.floor(rating);
-        const hasHalfStar = rating % 1 !== 0;
+        const numRating = parseFloat(rating) || 0;
+        const fullStars = Math.floor(numRating);
+        const hasHalfStar = numRating % 1 !== 0;
         const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
 
         let starsHTML = '';
@@ -174,38 +175,34 @@ const VenueCard = {
         });
     },
 
-    // Show venue details modal
+    // Show venue details modal - NOW USING REAL API
     async showVenueDetails(venueId) {
         try {
-            // Mock venue details for now
-            const venue = {
-                id: venueId,
-                name: 'Sample Venue',
-                type: 'bar',
-                district: 'Eixample',
-                rating: 4.5,
-                priceRange: 'moderate',
-                image: 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=600',
-                description: 'Amazing venue with great atmosphere and excellent service. Perfect for students and young professionals.',
-                address: 'Carrer de la Diputació, 123, Barcelona',
-                phone: '+34 93 123 4567',
-                website: 'https://example.com',
-                hours: {
-                    monday: '18:00-02:00',
-                    tuesday: '18:00-02:00',
-                    wednesday: '18:00-02:00',
-                    thursday: '18:00-03:00',
-                    friday: '18:00-03:00',
-                    saturday: '18:00-03:00',
-                    sunday: 'Closed'
-                },
-                features: ['WiFi', 'Outdoor seating', 'Live music', 'Happy hour']
-            };
+            Helpers.UI.showLoading();
 
-            this.renderVenueModal(venue);
+            // Fetch venue details from real API
+            const response = await fetch(`${CONFIG.API.BASE_URL}${CONFIG.API.ENDPOINTS.VENUES.DETAILS(venueId)}`);
+
+            if (!response.ok) {
+                if (response.status === 404) {
+                    throw new Error('Venue not found');
+                }
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            if (!data.success) {
+                throw new Error(data.message || 'Failed to fetch venue details');
+            }
+
+            this.renderVenueModal(data.data);
+
         } catch (error) {
             console.error('Error loading venue details:', error);
             Helpers.UI.showToast('Failed to load venue details', CONSTANTS.TOAST_TYPES.ERROR);
+        } finally {
+            Helpers.UI.hideLoading();
         }
     },
 
@@ -217,12 +214,32 @@ const VenueCard = {
         if (!modal || !modalBody) return;
 
         const isFavorite = Storage.Favorites.isFavorite(venue.id);
-        const priceSymbol = this.getPriceSymbol(venue.priceRange);
+        const priceSymbol = this.getPriceSymbol(venue.price_range || venue.priceRange);
+
+        // Parse features and hours from JSON if they're strings
+        let features = venue.features;
+        let hours = venue.hours;
+
+        if (typeof features === 'string') {
+            try {
+                features = JSON.parse(features);
+            } catch {
+                features = [];
+            }
+        }
+
+        if (typeof hours === 'string') {
+            try {
+                hours = JSON.parse(hours);
+            } catch {
+                hours = {};
+            }
+        }
 
         modalBody.innerHTML = `
       <div class="venue-details">
         <div class="venue-hero">
-          <img src="${venue.image}" alt="${venue.name}" class="venue-hero-image">
+          <img src="${venue.image || CONSTANTS.IMAGE.PLACEHOLDER}" alt="${venue.name}" class="venue-hero-image">
           <div class="venue-hero-overlay">
             <h1 class="venue-title">${venue.name}</h1>
             <div class="venue-meta">
@@ -238,31 +255,51 @@ const VenueCard = {
         <div class="venue-info-grid">
           <div class="venue-main-info">
             <h3>About</h3>
-            <p>${venue.description}</p>
+            <p>${venue.description || 'No description available.'}</p>
             
+            ${features && features.length > 0 ? `
             <h3>Features</h3>
             <div class="features-list">
-              ${venue.features.map(feature =>
+              ${features.map(feature =>
             `<span class="feature-tag">${feature}</span>`
         ).join('')}
             </div>
+            ` : ''}
             
+            ${hours && Object.keys(hours).length > 0 ? `
             <h3>Opening Hours</h3>
             <div class="hours-list">
-              ${Object.entries(venue.hours).map(([day, hours]) =>
+              ${Object.entries(hours).map(([day, time]) =>
             `<div class="hours-item">
                   <span class="day">${Helpers.String.capitalize(day)}</span>
-                  <span class="hours">${hours}</span>
+                  <span class="hours">${time}</span>
                 </div>`
         ).join('')}
             </div>
+            ` : ''}
+            
+            ${venue.reviews && venue.reviews.length > 0 ? `
+            <h3>Recent Reviews</h3>
+            <div class="reviews-list">
+              ${venue.reviews.slice(0, 3).map(review => `
+                <div class="review-item">
+                  <div class="review-header">
+                    <span class="reviewer-name">${review.user_name || 'Anonymous'}</span>
+                    <span class="review-rating">${this.createStars(review.rating)}</span>
+                  </div>
+                  <p class="review-text">${review.comment || review.review}</p>
+                  <span class="review-date">${Helpers.Date.format(review.created_at || review.date)}</span>
+                </div>
+              `).join('')}
+            </div>
+            ` : ''}
           </div>
           
           <div class="venue-contact-info">
             <h3>Contact & Location</h3>
             <div class="contact-item">
               <span class="icon">📍</span>
-              <span>${venue.address}</span>
+              <span>${venue.address || venue.district + ', Barcelona'}</span>
             </div>
             
             ${venue.phone ? `
@@ -286,6 +323,11 @@ const VenueCard = {
               <button class="btn btn-secondary" id="modal-share-btn" data-venue-id="${venue.id}">
                 Share Venue
               </button>
+              ${venue.website ? `
+                <button class="btn btn-secondary" onclick="window.open('${venue.website}', '_blank')">
+                  Visit Website
+                </button>
+              ` : ''}
             </div>
           </div>
         </div>

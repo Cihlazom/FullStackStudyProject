@@ -22,7 +22,6 @@ body {
 /* Page header */
 .page-header {
     margin-top: var(--header-height);
-    background-color: red;
 }
 
 
@@ -106,13 +105,13 @@ a:hover {
 }
 
 .btn-ghost {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--gradient-secondary);
     color: var(--white);
     backdrop-filter: var(--glass-backdrop-filter);
 }
 
 .btn-ghost:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--gradient-secondary);
     transform: translateY(-2px);
 }
 

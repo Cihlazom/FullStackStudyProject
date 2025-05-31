@@ -171,7 +171,7 @@ const Router = {
         </div>
       </section>
 
-      <section class="events-section">
+      <section class="events-section page-content">
         <div class="container">
           <div class="events-filters">
             <h3>Filter Events</h3>

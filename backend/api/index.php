@@ -247,14 +247,11 @@ function getVenue($db, $venueId) {
     }
 }
 
-// Handle events endpoints
+// Handle events endpoints - ИСПРАВЛЕНО!
 function handleEvents($method, $segments) {
-    $database = new Database();
-    $db = $database->getConnection();
-
     switch ($method) {
         case 'GET':
-            getEvents($db);
+            getEventsFromAPI();
             break;
 
         default:
@@ -267,8 +264,11 @@ function handleEvents($method, $segments) {
     }
 }
 
-// Get all events
-function getEvents($db) {
+// Get all events - ИСПРАВЛЕНО!
+function getEventsFromAPI() {
+    $database = new Database();
+    $db = $database->getConnection();
+
     try {
         $query = "SELECT e.*, v.name as venue_name, v.district as venue_district
                   FROM events e
@@ -284,6 +284,8 @@ function getEvents($db) {
         foreach ($events as &$event) {
             $event['price'] = floatval($event['price']);
             $event['venue'] = $event['venue_name'];
+            $event['date'] = $event['event_date'];
+            $event['time'] = $event['event_time'];
         }
 
         http_response_code(200);
