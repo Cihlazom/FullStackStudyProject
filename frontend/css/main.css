@@ -19,6 +19,13 @@ body {
     overflow-x: hidden;
 }
 
+/* Page header */
+.page-header {
+    margin-top: var(--header-height);
+    background-color: red;
+}
+
+
 /* Container */
 .container {
     max-width: var(--container-max-width);
