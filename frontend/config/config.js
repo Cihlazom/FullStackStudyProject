@@ -2,7 +2,7 @@
 const CONFIG = {
     // API Configuration
     API: {
-        BASE_URL: 'http://localhost:8000/api', // Change for production
+        BASE_URL: 'http://localhost/FullStackStudyProject/backend/api', // Change for production
         ENDPOINTS: {
             AUTH: {
                 LOGIN: '/auth/login',
