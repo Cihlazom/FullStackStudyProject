@@ -1,0 +1,495 @@
+/* Responsive Styles for Barcelona Local Platform */
+
+/* Extra Large screens (1200px and up) */
+@media (min-width: 1200px) {
+    .container {
+        max-width: 1200px;
+    }
+
+    .results-container {
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    }
+
+    .hero h1 {
+        font-size: var(--font-size-5xl);
+    }
+}
+
+/* Large screens (1024px to 1199px) */
+@media (max-width: 1199px) and (min-width: 1024px) {
+    .results-container {
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    }
+
+    .venue-info-grid {
+        gap: var(--spacing-6);
+    }
+}
+
+/* Medium screens (768px to 1023px) - Tablets */
+@media (max-width: 1023px) and (min-width: 768px) {
+    .container {
+        padding: 0 var(--spacing-6);
+    }
+
+    .hero h1 {
+        font-size: var(--font-size-4xl);
+    }
+
+    .hero p {
+        font-size: var(--font-size-lg);
+    }
+
+    .results-container {
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: var(--spacing-5);
+    }
+
+    .search-section {
+        padding: var(--spacing-6);
+    }
+
+    .venue-info-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-6);
+    }
+
+    .venue-contact-info {
+        order: -1;
+    }
+
+    .nav-menu {
+        gap: var(--spacing-6);
+    }
+
+    .auth-section {
+        gap: var(--spacing-2);
+    }
+}
+
+/* Small screens (480px to 767px) - Mobile Landscape */
+@media (max-width: 767px) and (min-width: 480px) {
+    .container {
+        padding: 0 var(--spacing-4);
+    }
+
+    .hero {
+        padding: var(--spacing-16) 0 var(--spacing-12);
+    }
+
+    .hero h1 {
+        font-size: var(--font-size-3xl);
+    }
+
+    .hero p {
+        font-size: var(--font-size-base);
+    }
+
+    .search-section {
+        padding: var(--spacing-5);
+        margin: var(--spacing-6) 0;
+    }
+
+    .results-container {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: var(--spacing-4);
+    }
+
+    .venue-card {
+        border-radius: var(--radius-lg);
+    }
+
+    .venue-content {
+        padding: var(--spacing-5);
+    }
+
+    .venue-actions {
+        flex-direction: column;
+        gap: var(--spacing-2);
+    }
+
+    .venue-actions .btn {
+        justify-content: center;
+    }
+
+    .venue-hero {
+        height: 250px;
+    }
+
+    .venue-title {
+        font-size: var(--font-size-2xl);
+    }
+
+    .venue-meta {
+        flex-wrap: wrap;
+        gap: var(--spacing-2);
+        font-size: var(--font-size-base);
+    }
+
+    .auth-modal {
+        padding: var(--spacing-5);
+    }
+
+    .modal-content {
+        margin: var(--spacing-4);
+        max-height: calc(100vh - var(--spacing-8));
+    }
+}
+
+/* Extra Small screens (up to 479px) - Mobile Portrait */
+@media (max-width: 479px) {
+    .container {
+        padding: 0 var(--spacing-4);
+    }
+
+    /* Header adjustments */
+    .navbar .container {
+        padding: 0 var(--spacing-4);
+    }
+
+    .logo {
+        font-size: var(--font-size-xl);
+    }
+
+    /* Hero section */
+    .hero {
+        padding: var(--spacing-12) 0 var(--spacing-10);
+    }
+
+    .hero h1 {
+        font-size: var(--font-size-2xl);
+        line-height: 1.2;
+    }
+
+    .hero p {
+        font-size: var(--font-size-sm);
+        margin-bottom: var(--spacing-6);
+    }
+
+    /* Search section */
+    .search-section {
+        padding: var(--spacing-4);
+        margin: var(--spacing-4) 0;
+        border-radius: var(--radius-lg);
+    }
+
+    .search-section h2 {
+        font-size: var(--font-size-xl);
+        margin-bottom: var(--spacing-4);
+    }
+
+    /* Results */
+    .results-header {
+        flex-direction: column;
+        gap: var(--spacing-3);
+        text-align: center;
+        margin-bottom: var(--spacing-4);
+    }
+
+    .results-header h2 {
+        font-size: var(--font-size-xl);
+    }
+
+    .view-controls {
+        justify-content: center;
+    }
+
+    .view-btn {
+        padding: var(--spacing-2) var(--spacing-3);
+        font-size: var(--font-size-sm);
+    }
+
+    .results-container {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-4);
+    }
+
+    /* Venue cards */
+    .venue-card {
+        border-radius: var(--radius-md);
+    }
+
+    .venue-image {
+        height: 180px;
+    }
+
+    .venue-content {
+        padding: var(--spacing-4);
+    }
+
+    .venue-name {
+        font-size: var(--font-size-lg);
+    }
+
+    .venue-header {
+        flex-direction: column;
+        align-items: start;
+        gap: var(--spacing-2);
+    }
+
+    .venue-rating {
+        align-self: flex-end;
+    }
+
+    .venue-info {
+        flex-direction: column;
+        align-items: start;
+        gap: var(--spacing-2);
+    }
+
+    .venue-actions {
+        flex-direction: column;
+        gap: var(--spacing-2);
+    }
+
+    .venue-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* Modal adjustments */
+    .modal {
+        padding: var(--spacing-2);
+    }
+
+    .modal-content {
+        margin: 0;
+        border-radius: var(--radius-lg);
+        max-height: 100vh;
+    }
+
+    .venue-details {
+        padding: 0;
+    }
+
+    .venue-hero {
+        height: 200px;
+        margin: 0;
+        margin-bottom: var(--spacing-4);
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    }
+
+    .venue-hero-overlay {
+        padding: var(--spacing-4);
+    }
+
+    .venue-title {
+        font-size: var(--font-size-xl);
+        margin-bottom: var(--spacing-2);
+    }
+
+    .venue-meta {
+        flex-direction: column;
+        align-items: start;
+        gap: var(--spacing-1);
+        font-size: var(--font-size-sm);
+    }
+
+    .venue-info-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-4);
+        padding: var(--spacing-4);
+    }
+
+    .venue-contact-info {
+        padding: var(--spacing-4);
+        order: -1;
+    }
+
+    .venue-actions-modal .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .features-list {
+        gap: var(--spacing-1);
+    }
+
+    .feature-tag {
+        font-size: var(--font-size-xs);
+        padding: var(--spacing-1) var(--spacing-2);
+    }
+
+    /* Auth modal */
+    .auth-modal {
+        padding: var(--spacing-4);
+        width: calc(100vw - var(--spacing-8));
+    }
+
+    .auth-modal h2 {
+        font-size: var(--font-size-xl);
+    }
+
+    /* Form elements */
+    .form-input,
+    .form-select {
+        padding: var(--spacing-3);
+        font-size: var(--font-size-base);
+    }
+
+    .btn {
+        padding: var(--spacing-3) var(--spacing-4);
+        font-size: var(--font-size-base);
+    }
+
+    .btn-sm {
+        padding: var(--spacing-2) var(--spacing-3);
+        font-size: var(--font-size-sm);
+    }
+
+    /* Navigation mobile */
+    .nav-menu {
+        padding: var(--spacing-6) var(--spacing-4);
+        gap: var(--spacing-4);
+    }
+
+    .nav-link {
+        padding: var(--spacing-3) var(--spacing-4);
+        width: 100%;
+        text-align: center;
+        border-radius: var(--radius-md);
+    }
+
+    .auth-section {
+        position: fixed;
+        top: calc(var(--header-height) + 200px);
+        left: 50%;
+        transform: translateX(-50%);
+        width: calc(100% - var(--spacing-8));
+        flex-direction: column;
+        gap: var(--spacing-3);
+    }
+
+    .auth-section .btn {
+        width: 100%;
+    }
+
+    /* Toast notifications */
+    .toast-container {
+        top: var(--spacing-16);
+        right: var(--spacing-2);
+        left: var(--spacing-2);
+    }
+
+    .toast {
+        min-width: auto;
+        width: 100%;
+    }
+
+    /* Utility classes for mobile */
+    .mobile-hidden {
+        display: none;
+    }
+
+    .mobile-full-width {
+        width: 100%;
+    }
+
+    .mobile-center {
+        text-align: center;
+    }
+
+    .mobile-stack {
+        flex-direction: column;
+    }
+}
+
+/* Landscape orientation adjustments */
+@media (max-height: 500px) and (orientation: landscape) {
+    .hero {
+        padding: var(--spacing-8) 0 var(--spacing-6);
+    }
+
+    .hero h1 {
+        font-size: var(--font-size-2xl);
+    }
+
+    .hero p {
+        font-size: var(--font-size-sm);
+        margin-bottom: var(--spacing-4);
+    }
+
+    .modal-content {
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    .venue-hero {
+        height: 150px;
+    }
+}
+
+/* Print styles */
+@media print {
+    .navbar,
+    .auth-section,
+    .view-controls,
+    .venue-actions,
+    .favorite-btn,
+    .modal,
+    .toast-container,
+    .loading-spinner {
+        display: none !important;
+    }
+
+    .hero {
+        background: none;
+        color: var(--gray-900);
+    }
+
+    .venue-card {
+        break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid var(--gray-300);
+    }
+
+    .venue-image {
+        height: 150px;
+    }
+
+    a {
+        color: var(--gray-900) !important;
+        text-decoration: underline;
+    }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    :root {
+        --primary-color: #0000ff;
+        --secondary-color: #800080;
+        --gray-600: #000000;
+        --gray-700: #000000;
+        --gray-800: #000000;
+        --gray-900: #000000;
+    }
+
+    .venue-card {
+        border: 2px solid var(--gray-900);
+    }
+
+    .btn {
+        border: 2px solid var(--gray-900);
+    }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    .venue-card:hover {
+        transform: none;
+    }
+
+    .btn:hover {
+        transform: none;
+    }
+
+    .favorite-btn:hover {
+        transform: none;
+    }
+}
