@@ -1,102 +1,105 @@
 // Simple SPA Router for Barcelona Local Platform
 const Router = {
-    // Current route state
-    currentRoute: 'home',
+        // Current route state
+        currentRoute: 'home',
 
-    // Available routes and their content
-    routes: {
-        home: {
-            title: 'Home - BarcelonaLocal',
-            render: () => Router.renderHomePage()
-        },
-        events: {
-            title: 'Events - BarcelonaLocal',
-            render: () => Router.renderEventsPage()
-        },
-        social: {
-            title: 'Social - BarcelonaLocal',
-            render: () => Router.renderSocialPage()
-        },
-        profile: {
-            title: 'Profile - BarcelonaLocal',
-            render: () => Router.renderProfilePage()
-        },
-        '404': {
-            title: '404 - Page Not Found',
-            render: () => Router.render404Page()
-        }
-    },
-
-    // Initialize router
-    init() {
-        // Handle browser back/forward buttons
-        window.addEventListener('popstate', (e) => {
-            const route = e.state?.route || this.getRouteFromHash();
-            this.navigateToRoute(route, false);
-        });
-
-        // Handle initial load
-        const initialRoute = this.getRouteFromHash();
-        this.navigateToRoute(initialRoute, true);
-
-        console.log('🛤️ Router initialized');
-    },
-
-    // Get route from URL hash
-    getRouteFromHash() {
-        const hash = window.location.hash.slice(1); // Remove #
-        return hash || 'home';
-    },
-
-    // Navigate to a route
-    navigateToRoute(route, pushState = true) {
-        // Check if route exists
-        if (!this.routes[route]) {
-            route = '404';
-        }
-
-        // Don't navigate if already on this route
-        if (route === this.currentRoute && pushState) {
-            return;
-        }
-
-        this.currentRoute = route;
-
-        // Update URL
-        if (pushState) {
-            const newUrl = route === 'home' ? '#' : `#${route}`;
-            history.pushState({ route }, '', newUrl);
-        }
-
-        // Update page title
-        document.title = this.routes[route].title;
-
-        // Render the page
-        this.routes[route].render();
-
-        // Update navigation active state
-        this.updateNavigation(route);
-
-        console.log(`🏃 Navigated to: ${route}`);
-    },
-
-    // Update navigation active states
-    updateNavigation(activeRoute) {
-        const navLinks = document.querySelectorAll('.nav-link');
-        navLinks.forEach(link => {
-            link.classList.remove('active');
-            if (link.dataset.page === activeRoute) {
-                link.classList.add('active');
+        // Available routes and their content
+        routes: {
+            home: {
+                title: 'Home - BarcelonaLocal',
+                render: () => Router.renderHomePage()
+            },
+            events: {
+                title: 'Events - BarcelonaLocal',
+                render: () => Router.renderEventsPage()
+            },
+            social: {
+                title: 'Social - BarcelonaLocal',
+                render: () => Router.renderSocialPage()
+            },
+            profile: {
+                title: 'Profile - BarcelonaLocal',
+                render: () => Router.renderProfilePage()
+            },
+            '404': {
+                title: '404 - Page Not Found',
+                render: () => Router.render404Page()
             }
-        });
-    },
+        },
 
-    // Render Home Page
-    renderHomePage() {
-        const mainContent = document.getElementById('main-content');
-        if (!mainContent) return;
+        // Initialize router
+        init() {
+            // Handle browser back/forward buttons
+            window.addEventListener('popstate', (e) => {
+                const route = e.state?.route || this.getRouteFromHash();
+                this.navigateToRoute(route, false);
+            });
 
-        mainContent.innerHTML = `
+            // Handle initial load
+            const initialRoute = this.getRouteFromHash();
+            this.navigateToRoute(initialRoute, true);
+
+            console.log('🛤️ Router initialized');
+        },
+
+        // Get route from URL hash
+        getRouteFromHash() {
+            const hash = window.location.hash.slice(1); // Remove #
+            return hash || 'home';
+        },
+
+        // Navigate to a route
+        navigateToRoute(route, pushState = true) {
+            // Check if route exists
+            if (!this.routes[route]) {
+                route = '404';
+            }
+
+            // Don't navigate if already on this route
+            if (route === this.currentRoute && pushState) {
+                return;
+            }
+
+            this.currentRoute = route;
+
+            // Update URL
+            if (pushState) {
+                const newUrl = route === 'home' ? '#' : `#${route}`;
+                history.pushState({ route }, '', newUrl);
+            }
+
+            // Update page title
+            document.title = this.routes[route].title;
+
+            // Render the page
+            this.routes[route].render();
+
+            // Update navigation active state
+            this.updateNavigation(route);
+
+            console.log(`🏃 Navigated to: ${route}`);
+        },
+
+        // Update navigation active states
+        updateNavigation(activeRoute) {
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.dataset.page === activeRoute) {
+                    link.classList.add('active');
+                }
+            });
+        },
+
+        // Render Home Page
+        renderHomePage() {
+            const mainContent = document.getElementById('main-content');
+            if (!mainContent) return;
+
+            // Включаем скролл обратно
+            document.body.style.overflow = 'auto';
+
+            mainContent.innerHTML = `
       <!-- Hero Section -->
       <section class="hero">
         <div class="container">
@@ -145,19 +148,22 @@ const Router = {
       </section>
     `;
 
-        // Re-bind events and load data
-        this.bindHomePageEvents();
-        if (window.App) {
-            App.loadVenues();
-        }
-    },
+            // Re-bind events and load data
+            this.bindHomePageEvents();
+            if (window.App) {
+                App.loadVenues();
+            }
+        },
 
-    // Render Events Page
-    renderEventsPage() {
-        const mainContent = document.getElementById('main-content');
-        if (!mainContent) return;
+        // Render Events Page
+        renderEventsPage() {
+            const mainContent = document.getElementById('main-content');
+            if (!mainContent) return;
 
-        mainContent.innerHTML = `
+            // Включаем скролл обратно
+            document.body.style.overflow = 'auto';
+
+            mainContent.innerHTML = `
       <section class="page-header">
         <div class="container">
           <h1>🎉 Events in Barcelona</h1>
@@ -236,15 +242,18 @@ const Router = {
       </section>
     `;
 
-        this.bindEventsPageEvents();
-    },
+            this.bindEventsPageEvents();
+        },
 
-    // Render Social Page
-    renderSocialPage() {
-        const mainContent = document.getElementById('main-content');
-        if (!mainContent) return;
+        // Render Social Page
+        renderSocialPage() {
+            const mainContent = document.getElementById('main-content');
+            if (!mainContent) return;
 
-        mainContent.innerHTML = `
+            // Включаем скролл обратно
+            document.body.style.overflow = 'auto';
+
+            mainContent.innerHTML = `
       <section class="page-header">
         <div class="container">
           <h1>🤝 Connect with People</h1>
@@ -319,20 +328,23 @@ const Router = {
       </section>
     `;
 
-        this.bindSocialPageEvents();
-    },
+            this.bindSocialPageEvents();
+        },
 
-    // Render Profile Page
-    renderProfilePage() {
-        const isAuthenticated = Storage?.Auth?.isAuthenticated() || false;
-        const userData = Storage?.User?.getData() || {};
+        // Render Profile Page
+        renderProfilePage() {
+            const isAuthenticated = Storage?.Auth?.isAuthenticated() || false;
+            const userData = Storage?.User?.getData() || {};
 
-        const mainContent = document.getElementById('main-content');
-        if (!mainContent) return;
+            const mainContent = document.getElementById('main-content');
+            if (!mainContent) return;
 
-        if (!isAuthenticated) {
-            // Show login prompt
-            mainContent.innerHTML = `
+            // Включаем скролл обратно
+            document.body.style.overflow = 'auto';
+
+            if (!isAuthenticated) {
+                // Show login prompt
+                mainContent.innerHTML = `
         <section class="page-header">
           <div class="container">
             <h1>👤 Your Profile</h1>
@@ -353,9 +365,9 @@ const Router = {
           </div>
         </section>
       `;
-        } else {
-            // Show profile page
-            mainContent.innerHTML = `
+            } else {
+                // Show profile page
+                mainContent.innerHTML = `
         <section class="page-header">
           <div class="container">
             <h1>👤 Your Profile</h1>
@@ -413,23 +425,23 @@ const Router = {
           </div>
         </section>
       `;
-        }
+            }
 
-        this.bindProfilePageEvents();
-    },
+            this.bindProfilePageEvents();
+        },
 
-    // Render 404 Page
-    render404Page() {
-        const mainContent = document.getElementById('main-content');
-        if (!mainContent) return;
+        // Render 404 Page
+        render404Page() {
+            const mainContent = document.getElementById('main-content');
+            if (!mainContent) return;
 
-        mainContent.innerHTML = `
+            // Отключаем скролл для всей страницы
+            document.body.style.overflow = 'hidden';
+
+            mainContent.innerHTML = `
       <section class="error-page">
         <div class="container">
           <div class="error-content">
-            <div class="error-image">
-              <img src="assets/images/404.jpg" alt="Page not found" class="error-img">
-            </div>
             <h1>404</h1>
             <h2>Page Not Found</h2>
             <p>Oops! The page you're looking for doesn't exist in our Barcelona guide.</p>
@@ -446,66 +458,66 @@ const Router = {
         </div>
       </section>
     `;
-    },
+  },
 
-    // Event binding methods
-    bindHomePageEvents() {
-        const exploreBtn = document.getElementById('explore-btn');
-        if (exploreBtn) {
-            exploreBtn.addEventListener('click', () => {
-                const searchSection = document.querySelector('.search-section');
-                if (searchSection) {
-                    Helpers.UI.scrollTo(searchSection, 80);
-                }
-            });
+  // Event binding methods
+  bindHomePageEvents() {
+    const exploreBtn = document.getElementById('explore-btn');
+    if (exploreBtn) {
+      exploreBtn.addEventListener('click', () => {
+        const searchSection = document.querySelector('.search-section');
+        if (searchSection) {
+          Helpers.UI.scrollTo(searchSection, 80);
         }
-
-        // Re-bind view controls if App is available
-        if (window.App && App.setupViewControls) {
-            App.setupViewControls();
-        }
-    },
-
-    bindEventsPageEvents() {
-        const filterButtons = document.querySelectorAll('[data-filter]');
-        filterButtons.forEach(btn => {
-            btn.addEventListener('click', () => {
-                // Update active state
-                filterButtons.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-
-                // Show toast for now
-                const filter = btn.dataset.filter;
-                Helpers.UI.showToast(`Filtering by: ${filter}`, CONSTANTS.TOAST_TYPES.INFO);
-            });
-        });
-    },
-
-    bindSocialPageEvents() {
-        const socialButtons = document.querySelectorAll('.social-card .btn');
-        socialButtons.forEach(btn => {
-            btn.addEventListener('click', () => {
-                Helpers.UI.showToast('Social feature coming soon!', CONSTANTS.TOAST_TYPES.INFO);
-            });
-        });
-    },
-
-    bindProfilePageEvents() {
-        const loginBtn = document.getElementById('login-prompt-btn');
-        const registerBtn = document.getElementById('register-prompt-btn');
-
-        if (loginBtn && window.Navbar) {
-            loginBtn.addEventListener('click', () => {
-                Navbar.showAuthModal('login');
-            });
-        }
-
-        if (registerBtn && window.Navbar) {
-            registerBtn.addEventListener('click', () => {
-                Navbar.showAuthModal('register');
-            });
-        }
+      });
     }
+
+    // Re-bind view controls if App is available
+    if (window.App && App.setupViewControls) {
+      App.setupViewControls();
+    }
+  },
+
+  bindEventsPageEvents() {
+    const filterButtons = document.querySelectorAll('[data-filter]');
+    filterButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        // Update active state
+        filterButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        // Show toast for now
+        const filter = btn.dataset.filter;
+        Helpers.UI.showToast(`Filtering by: ${filter}`, CONSTANTS.TOAST_TYPES.INFO);
+      });
+    });
+  },
+
+  bindSocialPageEvents() {
+    const socialButtons = document.querySelectorAll('.social-card .btn');
+    socialButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        Helpers.UI.showToast('Social feature coming soon!', CONSTANTS.TOAST_TYPES.INFO);
+      });
+    });
+  },
+
+  bindProfilePageEvents() {
+    const loginBtn = document.getElementById('login-prompt-btn');
+    const registerBtn = document.getElementById('register-prompt-btn');
+
+    if (loginBtn && window.Navbar) {
+      loginBtn.addEventListener('click', () => {
+        Navbar.showAuthModal('login');
+      });
+    }
+
+    if (registerBtn && window.Navbar) {
+      registerBtn.addEventListener('click', () => {
+        Navbar.showAuthModal('register');
+      });
+    }
+  }
 };
 
 // Make Router globally available
