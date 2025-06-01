@@ -18,6 +18,8 @@ const Navbar = {
                 navMenu.classList.toggle('active');
                 navToggle.classList.toggle('active');
             });
+
+            console.log('🛤️ Navbar initialized');
         }
 
         // Navigation links

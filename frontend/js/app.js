@@ -1,4 +1,4 @@
-// Updated App.js with real API integration
+// Updated App.js with search functionality
 const App = {
     // Application state
     state: {
@@ -7,6 +7,7 @@ const App = {
         events: [],
         isLoading: false,
         filters: {
+            query: '',
             type: '',
             district: '',
             priceRange: '',
@@ -62,6 +63,11 @@ const App = {
         // Initialize navbar
         Navbar.init();
 
+        // Initialize search component
+        if (window.SearchFilters) {
+            SearchFilters.init();
+        }
+
         // Set up modal close functionality
         this.setupModals();
 
@@ -76,7 +82,13 @@ const App = {
             // Load venues only if we're on the home page
             if (Router.currentRoute === 'home') {
                 Helpers.UI.showLoading();
-                await this.loadVenues();
+
+                // Load filters from URL if any
+                if (window.SearchFilters) {
+                    SearchFilters.loadFiltersFromURL();
+                } else {
+                    await this.loadVenues();
+                }
             }
 
             console.log('📊 Initial data loaded');
@@ -89,10 +101,15 @@ const App = {
         }
     },
 
-    // Load venues with current filters - NOW USING REAL API
+    // Load venues with current filters - UPDATED WITH SEARCH SUPPORT
     async loadVenues(append = false) {
         try {
             const params = new URLSearchParams();
+
+            // Add search query
+            if (this.state.filters.query) {
+                params.append('search', this.state.filters.query);
+            }
 
             // Add filters to API request
             if (this.state.filters.type) {
@@ -147,6 +164,11 @@ const App = {
 
             console.log(`📍 Loaded ${data.data.length} venues from API`);
 
+            // Save to search history if there's a query
+            if (this.state.filters.query && !append) {
+                Storage.SearchHistory.add(this.state.filters.query);
+            }
+
         } catch (error) {
             console.error('Error loading venues:', error);
 
@@ -171,7 +193,222 @@ const App = {
         }
     },
 
-    // Load events - NOW USING REAL API
+    // Apply filters - UPDATED FOR SEARCH
+    async applyFilters(filters) {
+        // Update state filters
+        this.state.filters = { ...this.state.filters, ...filters };
+        this.state.pagination.page = 1;
+
+        // Show loading
+        Helpers.UI.showLoading();
+
+        try {
+            await this.loadVenues();
+
+            // Update search statistics
+            this.updateSearchStats();
+
+        } catch (error) {
+            console.error('Filter application failed:', error);
+            Helpers.UI.showToast('Failed to apply filters', CONSTANTS.TOAST_TYPES.ERROR);
+        } finally {
+            Helpers.UI.hideLoading();
+        }
+    },
+
+    // Clear all filters - UPDATED
+    async clearFilters() {
+        this.state.filters = {
+            query: '',
+            type: '',
+            district: '',
+            priceRange: '',
+            rating: 0
+        };
+        this.state.pagination.page = 1;
+
+        Helpers.UI.showLoading();
+
+        try {
+            await this.loadVenues();
+            this.updateSearchStats();
+        } finally {
+            Helpers.UI.hideLoading();
+        }
+    },
+
+    // Update results title with search info - UPDATED
+    updateResultsTitle(totalCount = null) {
+        const titleElement = Helpers.DOM.get('results-title');
+        if (!titleElement) return;
+
+        const count = totalCount || this.state.venues.length;
+        const hasQuery = this.state.filters.query;
+        const hasFilters = Object.values(this.state.filters).some(filter => filter && filter !== this.state.filters.query);
+
+        if (hasQuery) {
+            titleElement.textContent = `Found ${count} result${count !== 1 ? 's' : ''} for "${this.state.filters.query}"`;
+        } else if (hasFilters) {
+            titleElement.textContent = `Found ${count} place${count !== 1 ? 's' : ''}`;
+        } else {
+            titleElement.textContent = `${count} Popular Places`;
+        }
+    },
+
+    // Update search statistics - NEW METHOD
+    updateSearchStats() {
+        const count = this.state.venues.length;
+        const hasQuery = this.state.filters.query;
+
+        if (hasQuery && count === 0) {
+            // Show search suggestions for empty results
+            this.showSearchSuggestions();
+        }
+    },
+
+    // Show search suggestions - NEW METHOD
+    showSearchSuggestions() {
+        const container = Helpers.DOM.get('results-container');
+        if (!container) return;
+
+        const recentSearches = Storage.SearchHistory.getRecent();
+        const suggestions = ['restaurants in Gràcia', 'bars near me', 'cheap cafes', 'coworking spaces'];
+
+        container.innerHTML = `
+            <div class="no-results">
+                <div class="no-results-icon">🔍</div>
+                <h3>No results found</h3>
+                <p>Try searching for something else or check out these suggestions:</p>
+                
+                <div class="search-suggestions">
+                    <h4>Popular searches:</h4>
+                    <div class="suggestion-tags">
+                        ${suggestions.map(suggestion =>
+            `<button class="suggestion-tag" onclick="App.applySuggestion('${suggestion}')">${suggestion}</button>`
+        ).join('')}
+                    </div>
+                </div>
+                
+                ${recentSearches.length > 0 ? `
+                <div class="recent-searches">
+                    <h4>Recent searches:</h4>
+                    <div class="suggestion-tags">
+                        ${recentSearches.slice(0, 5).map(search =>
+            `<button class="suggestion-tag" onclick="App.applySuggestion('${search.query}')">${search.query}</button>`
+        ).join('')}
+                    </div>
+                </div>
+                ` : ''}
+            </div>
+        `;
+    },
+
+    // Apply search suggestion - NEW METHOD
+    applySuggestion(suggestion) {
+        if (window.SearchFilters) {
+            const searchInput = Helpers.DOM.get('search-query');
+            if (searchInput) {
+                searchInput.value = suggestion;
+                SearchFilters.performSearch();
+            }
+        }
+    },
+
+    // Rest of methods remain the same...
+    updateLoadMoreButton() {
+        const loadMoreSection = document.querySelector('.load-more');
+        if (!loadMoreSection) return;
+
+        if (this.state.pagination.hasMore) {
+            loadMoreSection.style.display = 'block';
+        } else {
+            loadMoreSection.style.display = 'none';
+        }
+    },
+
+    setupModals() {
+        const modal = Helpers.DOM.get('venue-modal');
+        const closeBtn = document.querySelector('.modal-close');
+
+        if (modal && closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                modal.style.display = 'none';
+            });
+
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && modal.style.display === 'flex') {
+                    modal.style.display = 'none';
+                }
+            });
+        }
+    },
+
+    setupViewControls() {
+        const viewButtons = document.querySelectorAll('.view-btn');
+
+        viewButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                viewButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                const view = btn.dataset.view;
+                this.changeView(view);
+            });
+        });
+
+        const loadMoreBtn = Helpers.DOM.get('load-more-btn');
+        if (loadMoreBtn) {
+            loadMoreBtn.addEventListener('click', () => {
+                this.loadMoreVenues();
+            });
+        }
+    },
+
+    changeView(viewType) {
+        const container = Helpers.DOM.get('results-container');
+        if (!container) return;
+
+        container.classList.remove('grid-view', 'list-view', 'map-view');
+        container.classList.add(`${viewType}-view`);
+
+        if (viewType === 'list') {
+            Helpers.UI.showToast('List view - Coming soon!', CONSTANTS.TOAST_TYPES.INFO);
+        } else if (viewType === 'map') {
+            Helpers.UI.showToast('Map view - Coming soon!', CONSTANTS.TOAST_TYPES.INFO);
+        }
+    },
+
+    async loadMoreVenues() {
+        if (!this.state.pagination.hasMore || this.state.isLoading) {
+            return;
+        }
+
+        this.state.pagination.page++;
+        this.state.isLoading = true;
+
+        const loadMoreBtn = Helpers.DOM.get('load-more-btn');
+        if (loadMoreBtn) {
+            loadMoreBtn.textContent = 'Loading...';
+            loadMoreBtn.disabled = true;
+        }
+
+        try {
+            await this.loadVenues(true);
+        } finally {
+            this.state.isLoading = false;
+            if (loadMoreBtn) {
+                loadMoreBtn.textContent = 'Load More';
+                loadMoreBtn.disabled = false;
+            }
+        }
+    },
+
     async loadEvents() {
         try {
             const response = await fetch(`${CONFIG.API.BASE_URL}/${CONFIG.API.ENDPOINTS.EVENTS.LIST}`);
@@ -198,165 +435,13 @@ const App = {
         }
     },
 
-    // Update results title with real count
-    updateResultsTitle(totalCount = null) {
-        const titleElement = Helpers.DOM.get('results-title');
-        if (!titleElement) return;
-
-        const count = totalCount || this.state.venues.length;
-        const hasFilters = Object.values(this.state.filters).some(filter => filter);
-
-        if (hasFilters) {
-            titleElement.textContent = `Found ${count} place${count !== 1 ? 's' : ''}`;
-        } else {
-            titleElement.textContent = `${count} Popular Places`;
-        }
-    },
-
-    // Update load more button visibility
-    updateLoadMoreButton() {
-        const loadMoreSection = document.querySelector('.load-more');
-        if (!loadMoreSection) return;
-
-        if (this.state.pagination.hasMore) {
-            loadMoreSection.style.display = 'block';
-        } else {
-            loadMoreSection.style.display = 'none';
-        }
-    },
-
-    // Setup modal functionality
-    setupModals() {
-        const modal = Helpers.DOM.get('venue-modal');
-        const closeBtn = document.querySelector('.modal-close');
-
-        if (modal && closeBtn) {
-            // Close modal when clicking close button
-            closeBtn.addEventListener('click', () => {
-                modal.style.display = 'none';
-            });
-
-            // Close modal when clicking outside
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    modal.style.display = 'none';
-                }
-            });
-
-            // Close modal with Escape key
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && modal.style.display === 'flex') {
-                    modal.style.display = 'none';
-                }
-            });
-        }
-    },
-
-    // Setup view controls
-    setupViewControls() {
-        const viewButtons = document.querySelectorAll('.view-btn');
-
-        viewButtons.forEach(btn => {
-            btn.addEventListener('click', () => {
-                // Update active state
-                viewButtons.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-
-                // Change view
-                const view = btn.dataset.view;
-                this.changeView(view);
-            });
-        });
-
-        // Setup load more button
-        const loadMoreBtn = Helpers.DOM.get('load-more-btn');
-        if (loadMoreBtn) {
-            loadMoreBtn.addEventListener('click', () => {
-                this.loadMoreVenues();
-            });
-        }
-    },
-
-    // Change view type
-    changeView(viewType) {
-        const container = Helpers.DOM.get('results-container');
-        if (!container) return;
-
-        // Remove existing view classes
-        container.classList.remove('grid-view', 'list-view', 'map-view');
-
-        // Add new view class
-        container.classList.add(`${viewType}-view`);
-
-        // For now, just show a message for non-grid views
-        if (viewType === 'list') {
-            Helpers.UI.showToast('List view - Coming soon!', CONSTANTS.TOAST_TYPES.INFO);
-        } else if (viewType === 'map') {
-            Helpers.UI.showToast('Map view - Coming soon!', CONSTANTS.TOAST_TYPES.INFO);
-        }
-    },
-
-    // Load more venues
-    async loadMoreVenues() {
-        if (!this.state.pagination.hasMore || this.state.isLoading) {
-            return;
-        }
-
-        this.state.pagination.page++;
-        this.state.isLoading = true;
-
-        const loadMoreBtn = Helpers.DOM.get('load-more-btn');
-        if (loadMoreBtn) {
-            loadMoreBtn.textContent = 'Loading...';
-            loadMoreBtn.disabled = true;
-        }
-
-        try {
-            await this.loadVenues(true);
-        } finally {
-            this.state.isLoading = false;
-            if (loadMoreBtn) {
-                loadMoreBtn.textContent = 'Load More';
-                loadMoreBtn.disabled = false;
-            }
-        }
-    },
-
-    // Apply filters
-    async applyFilters(filters) {
-        this.state.filters = { ...this.state.filters, ...filters };
-        this.state.pagination.page = 1;
-
-        Helpers.UI.showLoading();
-        await this.loadVenues();
-        Helpers.UI.hideLoading();
-    },
-
-    // Clear all filters
-    async clearFilters() {
-        this.state.filters = {
-            type: '',
-            district: '',
-            priceRange: '',
-            rating: 0
-        };
-        this.state.pagination.page = 1;
-
-        Helpers.UI.showLoading();
-        await this.loadVenues();
-        Helpers.UI.hideLoading();
-    },
-
-    // Test API connection
     async testAPIConnection() {
         try {
             console.log('🔍 Testing API connection...');
 
-            // Test venues endpoint
             const venuesResponse = await fetch(`${CONFIG.API.BASE_URL}/venues?limit=1`);
             console.log('Venues API status:', venuesResponse.status);
 
-            // Test events endpoint
             const eventsResponse = await fetch(`${CONFIG.API.BASE_URL}/events`);
             console.log('Events API status:', eventsResponse.status);
 
@@ -375,17 +460,13 @@ const App = {
         }
     },
 
-    // Bind global events
     bindGlobalEvents() {
-        // Handle browser back/forward buttons
         window.addEventListener('popstate', (e) => {
             this.handleRouteChange();
         });
 
-        // Handle online/offline status
         window.addEventListener('online', () => {
             Helpers.UI.showToast('Connection restored', CONSTANTS.TOAST_TYPES.SUCCESS);
-            // Reload data when back online
             this.loadVenues();
         });
 
@@ -393,7 +474,6 @@ const App = {
             Helpers.UI.showToast('No internet connection', CONSTANTS.TOAST_TYPES.WARNING);
         });
 
-        // Handle explore button
         const exploreBtn = Helpers.DOM.get('explore-btn');
         if (exploreBtn) {
             exploreBtn.addEventListener('click', () => {
@@ -404,7 +484,6 @@ const App = {
         console.log('🔗 Global events bound');
     },
 
-    // Handle route changes
     handleRouteChange() {
         const hash = window.location.hash.slice(1);
 
@@ -414,19 +493,15 @@ const App = {
         }
     },
 
-    // Utility methods
     utils: {
-        // Show error message
         showError(message) {
             Helpers.UI.showToast(message, CONSTANTS.TOAST_TYPES.ERROR);
         },
 
-        // Show success message
         showSuccess(message) {
             Helpers.UI.showToast(message, CONSTANTS.TOAST_TYPES.SUCCESS);
         },
 
-        // Log app info
         logAppInfo() {
             console.log('%c🏛️ Barcelona Local Platform', 'font-size: 20px; color: #667eea;');
             console.log('Version:', CONFIG.APP.VERSION);
@@ -434,6 +509,7 @@ const App = {
             console.log('Environment:', CONFIG.API.BASE_URL.includes('localhost') ? 'Development' : 'Production');
             console.log('User authenticated:', Storage.Auth.isAuthenticated());
             console.log('Favorites count:', Storage.Favorites.getCount());
+            console.log('Search history:', Storage.SearchHistory.getRecent().length, 'items');
         }
     }
 };
@@ -443,11 +519,9 @@ document.addEventListener('DOMContentLoaded', () => {
     App.init();
     App.utils.logAppInfo();
 
-    // Test API connection on startup
     setTimeout(() => {
         App.testAPIConnection();
     }, 1000);
 });
 
-// Make App globally available for debugging
 window.App = App;

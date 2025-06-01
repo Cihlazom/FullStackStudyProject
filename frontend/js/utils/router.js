@@ -150,6 +150,12 @@ const Router = {
 
             // Re-bind events and load data
             this.bindHomePageEvents();
+
+            // Re-initialize search component
+            if (window.SearchFilters) {
+                SearchFilters.init();
+            }
+
             if (window.App) {
                 App.loadVenues();
             }
@@ -470,6 +476,11 @@ const Router = {
           Helpers.UI.scrollTo(searchSection, 80);
         }
       });
+    }
+
+    // Re-initialize search filters if they exist
+    if (window.SearchFilters) {
+      SearchFilters.init();
     }
 
     // Re-bind view controls if App is available
