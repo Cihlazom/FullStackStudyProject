@@ -1,14 +1,21 @@
-// Search and Filters Component for Barcelona Local Platform
+// Обновленный SearchFilters компонент с выпадающими фильтрами
 const SearchFilters = {
+    // Состояние фильтров
+    state: {
+        isExpanded: false,
+        hasActiveFilters: false
+    },
+
     // Initialize search component
     init() {
         this.render();
         this.bindEvents();
+        this.updateFilterIndicator();
 
         console.log('🛤️ SearchFilters initialized');
     },
 
-    // Render search form
+    // Render search form with collapsible filters
     render() {
         const container = Helpers.DOM.get('search-container');
         if (!container) return;
@@ -16,83 +23,97 @@ const SearchFilters = {
         container.innerHTML = `
             <div class="search-form">
                 <h2>What are you looking for?</h2>
-                <form id="venue-search-form" class="search-form-container">
-                    <div class="search-row">
-                        <div class="form-group">
-                            <label for="search-query" class="form-label">Search venues</label>
-                            <input type="text" 
-                                   id="search-query" 
-                                   name="query" 
-                                   class="form-input" 
-                                   placeholder="Restaurant, bar, café..."
-                                   autocomplete="off">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="venue-type" class="form-label">Type</label>
-                            <select id="venue-type" name="type" class="form-select">
-                                <option value="">All types</option>
-                                <option value="restaurant">Restaurant</option>
-                                <option value="bar">Bar</option>
-                                <option value="cafe">Café</option>
-                                <option value="club">Club</option>
-                                <option value="coworking">Coworking</option>
-                                <option value="cultural">Cultural</option>
-                                <option value="outdoor">Outdoor</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="search-row">
-                        <div class="form-group">
-                            <label for="venue-district" class="form-label">District</label>
-                            <select id="venue-district" name="district" class="form-select">
-                                <option value="">All districts</option>
-                                <option value="Ciutat Vella">Ciutat Vella</option>
-                                <option value="Eixample">Eixample</option>
-                                <option value="Sants-Montjuïc">Sants-Montjuïc</option>
-                                <option value="Les Corts">Les Corts</option>
-                                <option value="Sarrià-Sant Gervasi">Sarrià-Sant Gervasi</option>
-                                <option value="Gràcia">Gràcia</option>
-                                <option value="Horta-Guinardó">Horta-Guinardó</option>
-                                <option value="Nou Barris">Nou Barris</option>
-                                <option value="Sant Andreu">Sant Andreu</option>
-                                <option value="Sant Martí">Sant Martí</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="price-range" class="form-label">Price Range</label>
-                            <select id="price-range" name="priceRange" class="form-select">
-                                <option value="">Any price</option>
-                                <option value="budget">€ - Budget</option>
-                                <option value="moderate">€€ - Moderate</option>
-                                <option value="expensive">€€€ - Expensive</option>
-                                <option value="luxury">€€€€ - Luxury</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="search-actions">
-                        <button type="submit" class="btn btn-primary search-btn">
+                
+                <!-- Main Search Bar -->
+                <div class="main-search-container">
+                    <div class="search-input-group">
+                        <input type="text" 
+                               id="search-query" 
+                               name="query" 
+                               class="form-input search-main-input" 
+                               placeholder="Search restaurants, bars, cafés..."
+                               autocomplete="off">
+                        <button type="button" class="search-btn-main btn btn-primary">
                             🔍 Search
                         </button>
-                        <button type="button" class="btn btn-secondary clear-btn">
-                            Clear Filters
-                        </button>
                     </div>
-                </form>
+                    
+                    <!-- Filters Toggle Button -->
+                    <button type="button" class="filters-toggle-btn" id="filters-toggle">
+                        <span class="toggle-icon">⚙️</span>
+                        <span class="toggle-text">Filters</span>
+                        <span class="active-filters-count" id="active-filters-count" style="display: none;">0</span>
+                        <span class="expand-arrow" id="expand-arrow">▼</span>
+                    </button>
+                </div>
+
+                <!-- Collapsible Filters Panel -->
+                <div class="filters-panel" id="filters-panel">
+                    <form id="venue-search-form" class="filters-form-container">
+                        <div class="filters-grid">
+                            <div class="filter-group">
+                                <label for="venue-type" class="filter-label">Type</label>
+                                <select id="venue-type" name="type" class="form-select filter-select">
+                                    <option value="">All types</option>
+                                    <option value="restaurant">Restaurant</option>
+                                    <option value="bar">Bar</option>
+                                    <option value="cafe">Café</option>
+                                    <option value="club">Club</option>
+                                    <option value="coworking">Coworking</option>
+                                    <option value="cultural">Cultural</option>
+                                    <option value="outdoor">Outdoor</option>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label for="venue-district" class="filter-label">District</label>
+                                <select id="venue-district" name="district" class="form-select filter-select">
+                                    <option value="">All districts</option>
+                                    <option value="Ciutat Vella">Ciutat Vella</option>
+                                    <option value="Eixample">Eixample</option>
+                                    <option value="Sants-Montjuïc">Sants-Montjuïc</option>
+                                    <option value="Les Corts">Les Corts</option>
+                                    <option value="Sarrià-Sant Gervasi">Sarrià-Sant Gervasi</option>
+                                    <option value="Gràcia">Gràcia</option>
+                                    <option value="Horta-Guinardó">Horta-Guinardó</option>
+                                    <option value="Nou Barris">Nou Barris</option>
+                                    <option value="Sant Andreu">Sant Andreu</option>
+                                    <option value="Sant Martí">Sant Martí</option>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label for="price-range" class="filter-label">Price Range</label>
+                                <select id="price-range" name="priceRange" class="form-select filter-select">
+                                    <option value="">Any price</option>
+                                    <option value="budget">€ - Budget</option>
+                                    <option value="moderate">€€ - Moderate</option>
+                                    <option value="expensive">€€€ - Expensive</option>
+                                    <option value="luxury">€€€€ - Luxury</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="filters-actions">
+                            <button type="button" class="btn btn-secondary clear-filters-btn">
+                                Clear All
+                            </button>
+                            <button type="submit" class="btn btn-primary apply-filters-btn">
+                                Apply Filters
+                            </button>
+                        </div>
+                    </form>
+                </div>
                 
-                <!-- Quick Filter Tags -->
+                <!-- Quick Filter Tags (Always Visible) -->
                 <div class="quick-filters">
-                    <h3>Popular searches:</h3>
                     <div class="filter-tags">
                         <button class="filter-tag" data-type="bar">🍺 Bars</button>
                         <button class="filter-tag" data-type="restaurant">🍽️ Restaurants</button>
                         <button class="filter-tag" data-type="cafe">☕ Cafés</button>
                         <button class="filter-tag" data-district="Gràcia">📍 Gràcia</button>
                         <button class="filter-tag" data-district="Ciutat Vella">📍 Ciutat Vella</button>
-                        <button class="filter-tag" data-price="budget">💰 Budget-friendly</button>
+                        <button class="filter-tag" data-price="budget">💰 Budget</button>
                     </div>
                 </div>
             </div>
@@ -102,15 +123,41 @@ const SearchFilters = {
     // Bind event listeners
     bindEvents() {
         const form = Helpers.DOM.get('venue-search-form');
-        const clearBtn = document.querySelector('.clear-btn');
         const searchInput = Helpers.DOM.get('search-query');
+        const mainSearchBtn = document.querySelector('.search-btn-main');
+        const clearBtn = document.querySelector('.clear-filters-btn');
+        const applyBtn = document.querySelector('.apply-filters-btn');
+        const filtersToggle = Helpers.DOM.get('filters-toggle');
         const filterTags = document.querySelectorAll('.filter-tag');
+
+        // Toggle filters panel
+        if (filtersToggle) {
+            filtersToggle.addEventListener('click', () => {
+                this.toggleFiltersPanel();
+            });
+        }
+
+        // Main search button
+        if (mainSearchBtn) {
+            mainSearchBtn.addEventListener('click', () => {
+                this.performSearch();
+            });
+        }
 
         // Search form submission
         if (form) {
             form.addEventListener('submit', (e) => {
                 e.preventDefault();
                 this.performSearch();
+            });
+        }
+
+        // Apply filters button
+        if (applyBtn) {
+            applyBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.performSearch();
+                this.toggleFiltersPanel(); // Close panel after applying
             });
         }
 
@@ -128,6 +175,14 @@ const SearchFilters = {
                     this.performSearch();
                 }, CONFIG.APP.DEBOUNCE_DELAY)
             );
+
+            // Enter key для основного поиска
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.performSearch();
+                }
+            });
         }
 
         // Quick filter tags
@@ -137,33 +192,99 @@ const SearchFilters = {
             });
         });
 
-        // Filter change events
+        // Filter change events для обновления индикатора
         const filterSelects = form?.querySelectorAll('select');
         filterSelects?.forEach(select => {
             select.addEventListener('change', () => {
+                this.updateFilterIndicator();
                 this.performSearch();
             });
         });
+
+        // Close filters when clicking outside
+        document.addEventListener('click', (e) => {
+            const filtersPanel = Helpers.DOM.get('filters-panel');
+            const filtersToggle = Helpers.DOM.get('filters-toggle');
+
+            if (this.state.isExpanded &&
+                filtersPanel &&
+                !filtersPanel.contains(e.target) &&
+                !filtersToggle.contains(e.target)) {
+                this.toggleFiltersPanel();
+            }
+        });
+    },
+
+    // Toggle filters panel
+    toggleFiltersPanel() {
+        const panel = Helpers.DOM.get('filters-panel');
+        const arrow = Helpers.DOM.get('expand-arrow');
+        const toggleBtn = Helpers.DOM.get('filters-toggle');
+
+        if (!panel || !arrow || !toggleBtn) return;
+
+        this.state.isExpanded = !this.state.isExpanded;
+
+        if (this.state.isExpanded) {
+            panel.classList.add('expanded');
+            arrow.textContent = '▲';
+            toggleBtn.classList.add('active');
+        } else {
+            panel.classList.remove('expanded');
+            arrow.textContent = '▼';
+            toggleBtn.classList.remove('active');
+        }
+    },
+
+    // Update filter indicator
+    updateFilterIndicator() {
+        const filters = this.getCurrentFilters();
+        const activeCount = Object.values(filters).filter(value => value && value !== filters.query).length;
+        const countElement = Helpers.DOM.get('active-filters-count');
+        const toggleBtn = Helpers.DOM.get('filters-toggle');
+
+        if (countElement && toggleBtn) {
+            if (activeCount > 0) {
+                countElement.style.display = 'inline-block';
+                countElement.textContent = activeCount;
+                toggleBtn.classList.add('has-filters');
+                this.state.hasActiveFilters = true;
+            } else {
+                countElement.style.display = 'none';
+                toggleBtn.classList.remove('has-filters');
+                this.state.hasActiveFilters = false;
+            }
+        }
     },
 
     // Perform search with current filters
     async performSearch() {
+        const searchQuery = Helpers.DOM.get('search-query').value || '';
         const form = Helpers.DOM.get('venue-search-form');
         if (!form) return;
 
         const formData = new FormData(form);
+
+        // Добавляем query из основного поля поиска
         const filters = {
-            query: formData.get('query') || '',
+            query: searchQuery,
             type: formData.get('type') || '',
             district: formData.get('district') || '',
             priceRange: formData.get('priceRange') || ''
         };
 
         // Show loading state
-        const searchBtn = document.querySelector('.search-btn');
+        const searchBtn = document.querySelector('.search-btn-main');
+        const applyBtn = document.querySelector('.apply-filters-btn');
+
         if (searchBtn) {
             searchBtn.textContent = '🔍 Searching...';
             searchBtn.disabled = true;
+        }
+
+        if (applyBtn) {
+            applyBtn.textContent = 'Applying...';
+            applyBtn.disabled = true;
         }
 
         try {
@@ -175,16 +296,48 @@ const SearchFilters = {
             // Update URL with search params
             this.updateURL(filters);
 
+            // Update filter indicator
+            this.updateFilterIndicator();
+
         } catch (error) {
             console.error('Search failed:', error);
             Helpers.UI.showToast('Search failed. Please try again.', CONSTANTS.TOAST_TYPES.ERROR);
         } finally {
-            // Reset button state
+            // Reset button states
             if (searchBtn) {
                 searchBtn.textContent = '🔍 Search';
                 searchBtn.disabled = false;
             }
+
+            if (applyBtn) {
+                applyBtn.textContent = 'Apply Filters';
+                applyBtn.disabled = false;
+            }
         }
+    },
+
+    // Clear all filters
+    clearFilters() {
+        const form = Helpers.DOM.get('venue-search-form');
+        const searchInput = Helpers.DOM.get('search-query');
+
+        if (form) form.reset();
+        if (searchInput) searchInput.value = '';
+
+        // Clear search through App
+        if (window.App) {
+            App.clearFilters();
+        }
+
+        // Update indicator
+        this.updateFilterIndicator();
+
+        // Close filters panel
+        if (this.state.isExpanded) {
+            this.toggleFiltersPanel();
+        }
+
+        Helpers.UI.showToast('Filters cleared', CONSTANTS.TOAST_TYPES.SUCCESS);
     },
 
     // Apply quick filter
@@ -217,23 +370,6 @@ const SearchFilters = {
         setTimeout(() => tag.classList.remove('active'), 2000);
     },
 
-    // Clear all filters
-    clearFilters() {
-        const form = Helpers.DOM.get('venue-search-form');
-        if (!form) return;
-
-        // Reset form
-        form.reset();
-
-        // Clear search through App
-        if (window.App) {
-            App.clearFilters();
-        }
-
-        // Show success message
-        Helpers.UI.showToast('Filters cleared', CONSTANTS.TOAST_TYPES.SUCCESS);
-    },
-
     // Update URL with search parameters
     updateURL(filters) {
         const params = new URLSearchParams();
@@ -255,15 +391,22 @@ const SearchFilters = {
     loadFiltersFromURL() {
         const params = new URLSearchParams(window.location.search);
         const form = Helpers.DOM.get('venue-search-form');
+        const searchInput = Helpers.DOM.get('search-query');
+
         if (!form) return;
 
         // Set form values from URL params
         params.forEach((value, key) => {
-            const input = form.querySelector(`[name="${key}"]`);
-            if (input) {
-                input.value = value;
+            if (key === 'query') {
+                if (searchInput) searchInput.value = value;
+            } else {
+                const input = form.querySelector(`[name="${key}"]`);
+                if (input) input.value = value;
             }
         });
+
+        // Update filter indicator
+        this.updateFilterIndicator();
 
         // Perform search if there are filters
         if (params.toString()) {
@@ -273,12 +416,14 @@ const SearchFilters = {
 
     // Get current filters
     getCurrentFilters() {
+        const searchInput = Helpers.DOM.get('search-query');
         const form = Helpers.DOM.get('venue-search-form');
+
         if (!form) return {};
 
         const formData = new FormData(form);
         return {
-            query: formData.get('query') || '',
+            query: searchInput ? searchInput.value : '',
             type: formData.get('type') || '',
             district: formData.get('district') || '',
             priceRange: formData.get('priceRange') || ''

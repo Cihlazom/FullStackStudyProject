@@ -45,10 +45,6 @@
         gap: var(--spacing-5);
     }
 
-    .search-section {
-        padding: var(--spacing-6);
-    }
-
     .venue-info-grid {
         grid-template-columns: 1fr;
         gap: var(--spacing-6);
@@ -83,11 +79,6 @@
 
     .hero p {
         font-size: var(--font-size-base);
-    }
-
-    .search-section {
-        padding: var(--spacing-5);
-        margin: var(--spacing-6) 0;
     }
 
     .results-container {
@@ -134,6 +125,26 @@
         margin: var(--spacing-4);
         max-height: calc(100vh - var(--spacing-8));
     }
+
+    /* Navigation mobile */
+    .nav-menu {
+        padding: var(--spacing-6) var(--spacing-4);
+        gap: var(--spacing-4);
+    }
+
+    .auth-section {
+        position: fixed;
+        top: calc(var(--header-height) + 200px);
+        left: 50%;
+        transform: translateX(-50%);
+        width: calc(100% - var(--spacing-8));
+        flex-direction: column;
+        gap: var(--spacing-3);
+    }
+
+    .auth-section .btn {
+        width: 100%;
+    }
 }
 
 /* Extra Small screens (up to 479px) - Mobile Portrait */
@@ -164,13 +175,6 @@
     .hero p {
         font-size: var(--font-size-sm);
         margin-bottom: var(--spacing-6);
-    }
-
-    /* Search section */
-    .search-section {
-        padding: var(--spacing-4);
-        margin: var(--spacing-4) 0;
-        border-radius: var(--radius-lg);
     }
 
     .search-section h2 {

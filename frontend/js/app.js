@@ -39,6 +39,8 @@ const App = {
         // Bind global events
         this.bindGlobalEvents();
 
+        this.setupViewControls();
+
         console.log('✅ Application initialized successfully!');
     },
 
@@ -64,8 +66,23 @@ const App = {
         Navbar.init();
 
         // Initialize search component
+        // if (window.SearchFilters) {
+        //     SearchFilters.init();
+        // }
+
         if (window.SearchFilters) {
-            SearchFilters.init();
+            console.log('🔄 Initializing SearchFilters...');
+            console.log('SearchFilters has state:', !!SearchFilters.state);
+
+            // Проверяем, что это новая версия с state
+            if (SearchFilters.state) {
+                SearchFilters.init();
+                console.log('✅ New SearchFilters initialized');
+            } else {
+                console.log('⚠️ Old SearchFilters detected, skipping');
+            }
+        } else {
+            console.error('❌ SearchFilters not found!');
         }
 
         // Set up modal close functionality

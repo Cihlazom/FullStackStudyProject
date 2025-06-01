@@ -1,4 +1,6 @@
 <?php
+error_log("=== VENUES.PHP2 LOADED ===");
+
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -26,11 +28,14 @@ $method = $_SERVER['REQUEST_METHOD'];
 try {
     switch ($method) {
         case 'GET':
-            if (isset($_GET['id'])) {
-                // Get single venue
+            if (isset($segments[1]) && is_numeric($segments[1])) {
+                getVenue($segments[1]);
+            }
+            elseif (isset($_GET['id'])) {
+                error_log("Getting single venue from GET param: " . $_GET['id']);
                 getVenue($_GET['id']);
-            } else {
-                // Get all venues with filters and search
+            }
+            else {
                 getVenues();
             }
             break;
@@ -61,7 +66,10 @@ function getVenues() {
         $searchQuery = $_GET['search'] ?? '';
         $searchQuery = trim($searchQuery);
 
+        error_log("=== SEARCH DEBUG ===");
         error_log($searchQuery);
+        error_log("===================");
+
 
         // Build base query
         if (!empty($searchQuery)) {

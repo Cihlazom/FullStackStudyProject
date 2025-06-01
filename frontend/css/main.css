@@ -307,8 +307,14 @@ a:hover {
     width: 100%;
     max-height: 90vh;
     overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
     position: relative;
     box-shadow: var(--shadow-2xl);
+}
+
+.modal-content::-webkit-scrollbar {
+    display: none;
 }
 
 .modal-close {
