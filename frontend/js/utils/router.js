@@ -454,33 +454,15 @@ const Router = {
                     </div>
                     <div class="detail-item">
                       <span class="detail-label">Age Range:</span>
-                      <span class="detail-value">${userData.age || 'Not set'}</span>
+                      <span class="detail-value">${userData.age_range || 'Not set'}</span>
                     </div>
                   </div>
-                  <button class="btn btn-secondary">Edit Profile</button>
                 </div>
 
                 <div class="profile-card">
                   <h3>Your Favorites</h3>
                   <p>Places you've saved: <strong>${Storage?.Favorites?.getCount() || 0}</strong></p>
                   <button class="btn btn-secondary">View Favorites</button>
-                </div>
-              </div>
-
-              <div class="profile-actions">
-                <div class="profile-card">
-                  <h3>Quick Actions</h3>
-                  <div class="action-buttons">
-                    <button class="btn btn-primary">Find Events</button>
-                    <button class="btn btn-primary">Discover Places</button>
-                    <button class="btn btn-primary">Connect with People</button>
-                    <button class="btn btn-secondary">Settings</button>
-                  </div>
-                </div>
-
-                <div class="profile-card">
-                  <h3>Recent Activity</h3>
-                  <p>Your recent visits and interactions will appear here.</p>
                 </div>
               </div>
             </div>

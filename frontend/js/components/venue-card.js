@@ -2,59 +2,59 @@
 const VenueCard = {
     // Create a venue card HTML
     create(venue) {
-        const isFavorite = Storage.Favorites.isFavorite(venue.id);
+        const isFavorite = this.isFavorite(venue.id);
         const priceSymbol = this.getPriceSymbol(venue.price_range || venue.priceRange);
         const distanceText = venue.distance ? Helpers.Utils.formatDistance(venue.distance) : '';
 
         return `
-      <div class="venue-card" data-venue-id="${venue.id}">
-        <div class="venue-image">
-          <img src="${venue.image || CONSTANTS.IMAGE.PLACEHOLDER}" 
-               alt="${venue.name}" 
-               onerror="this.src='${CONSTANTS.IMAGE.PLACEHOLDER}'">
-          <div class="venue-type-badge">${Helpers.String.capitalize(venue.type)}</div>
-          <button class="favorite-btn ${isFavorite ? 'active' : ''}" 
-                  data-venue-id="${venue.id}" 
-                  title="${isFavorite ? 'Remove from favorites' : 'Add to favorites'}">
-            <span class="heart-icon">${isFavorite ? '❤️' : '🤍'}</span>
-          </button>
-        </div>
-        
-        <div class="venue-content">
-          <div class="venue-header">
-            <h3 class="venue-name">${Helpers.String.escapeHtml(venue.name)}</h3>
-            <div class="venue-rating">
-              <span class="rating-stars">${this.createStars(venue.rating)}</span>
-              <span class="rating-number">${venue.rating}</span>
+            <div class="venue-card" data-venue-id="${venue.id}">
+                <div class="venue-image">
+                    <img src="${venue.image || CONSTANTS.IMAGE.PLACEHOLDER}" 
+                         alt="${venue.name}" 
+                         onerror="this.src='${CONSTANTS.IMAGE.PLACEHOLDER}'">
+                    <div class="venue-type-badge">${Helpers.String.capitalize(venue.type)}</div>
+                    <button class="favorite-btn ${isFavorite ? 'active' : ''}" 
+                            data-venue-id="${venue.id}" 
+                            title="${isFavorite ? 'Remove from favorites' : 'Add to favorites'}">
+                        <span class="heart-icon">${isFavorite ? '❤️' : '🤍'}</span>
+                    </button>
+                </div>
+                
+                <div class="venue-content">
+                    <div class="venue-header">
+                        <h3 class="venue-name">${Helpers.String.escapeHtml(venue.name)}</h3>
+                        <div class="venue-rating">
+                            <span class="rating-stars">${this.createStars(venue.rating)}</span>
+                            <span class="rating-number">${venue.rating}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="venue-info">
+                        <div class="venue-district">
+                            <span class="icon">📍</span>
+                            <span>${venue.district}</span>
+                            ${distanceText ? `<span class="distance">(${distanceText})</span>` : ''}
+                        </div>
+                        
+                        <div class="venue-price">
+                            <span class="price-range">${priceSymbol}</span>
+                            <span class="price-label">${Helpers.String.capitalize(venue.price_range || venue.priceRange || 'moderate')}</span>
+                        </div>
+                    </div>
+                    
+                    <p class="venue-description">${Helpers.String.truncate(venue.description || 'No description available', 80)}</p>
+                    
+                    <div class="venue-actions">
+                        <button class="btn btn-primary btn-sm view-details-btn" data-venue-id="${venue.id}">
+                            View Details
+                        </button>
+                        <button class="btn btn-secondary btn-sm share-btn" data-venue-id="${venue.id}">
+                            Share
+                        </button>
+                    </div>
+                </div>
             </div>
-          </div>
-          
-          <div class="venue-info">
-            <div class="venue-district">
-              <span class="icon">📍</span>
-              <span>${venue.district}</span>
-              ${distanceText ? `<span class="distance">(${distanceText})</span>` : ''}
-            </div>
-            
-            <div class="venue-price">
-              <span class="price-range">${priceSymbol}</span>
-              <span class="price-label">${Helpers.String.capitalize(venue.price_range || venue.priceRange || 'moderate')}</span>
-            </div>
-          </div>
-          
-          <p class="venue-description">${Helpers.String.truncate(venue.description || 'No description available', 80)}</p>
-          
-          <div class="venue-actions">
-            <button class="btn btn-primary btn-sm view-details-btn" data-venue-id="${venue.id}">
-              View Details
-            </button>
-            <button class="btn btn-secondary btn-sm share-btn" data-venue-id="${venue.id}">
-              Share
-            </button>
-          </div>
-        </div>
-      </div>
-    `;
+        `;
     },
 
     // Create multiple venue cards
@@ -110,17 +110,20 @@ const VenueCard = {
 
         if (!venues || venues.length === 0) {
             container.innerHTML = `
-        <div class="no-results">
-          <div class="no-results-icon">🔍</div>
-          <h3>No venues found</h3>
-          <p>Try adjusting your filters or search terms</p>
-        </div>
-      `;
+                <div class="no-results">
+                    <div class="no-results-icon">🔍</div>
+                    <h3>No venues found</h3>
+                    <p>Try adjusting your filters or search terms</p>
+                </div>
+            `;
             return;
         }
 
         container.innerHTML = this.createMultiple(venues);
         this.bindEvents(container);
+
+        // Загружаем favorites пользователя после рендера
+        this.loadUserFavorites();
     },
 
     // Append venues to existing container
@@ -355,27 +358,102 @@ const VenueCard = {
     },
 
     // Toggle favorite status
-    toggleFavorite(venueId, button) {
-        const isFavorite = Storage.Favorites.isFavorite(venueId);
-
-        if (isFavorite) {
-            Storage.Favorites.remove(venueId);
-            Helpers.UI.showToast(CONSTANTS.SUCCESS_MESSAGES.FAVORITE_REMOVED, CONSTANTS.TOAST_TYPES.SUCCESS);
-        } else {
-            Storage.Favorites.add(venueId, { name: 'Venue Name' }); // Add basic venue data
-            Helpers.UI.showToast(CONSTANTS.SUCCESS_MESSAGES.FAVORITE_ADDED, CONSTANTS.TOAST_TYPES.SUCCESS);
+    async toggleFavorite(venueId, button) {
+        // Проверяем авторизацию
+        if (!Storage.Auth.isAuthenticated()) {
+            Helpers.UI.showToast('Please log in to add favorites', CONSTANTS.TOAST_TYPES.WARNING);
+            if (window.Navbar) {
+                Navbar.showAuthModal('login');
+            }
+            return;
         }
 
-        // Update button appearance
-        this.updateFavoriteButton(button, !isFavorite);
+        const isFavorite = button.classList.contains('active');
+        const token = Storage.Auth.getToken();
 
-        // Update all favorite buttons for this venue
-        const allFavoriteButtons = document.querySelectorAll(`[data-venue-id="${venueId}"]`);
-        allFavoriteButtons.forEach(btn => {
-            if (btn.classList.contains('favorite-btn')) {
-                this.updateFavoriteButton(btn, !isFavorite);
+        // Показываем loading состояние
+        const originalContent = button.innerHTML;
+        button.innerHTML = '<span class="heart-icon">⏳</span>';
+        button.disabled = true;
+
+        try {
+            let response;
+
+            if (isFavorite) {
+                // Удаляем из избранного
+                response = await fetch(`${CONFIG.API.BASE_URL}/favorites/${venueId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+            } else {
+                // Добавляем в избранное
+                response = await fetch(`${CONFIG.API.BASE_URL}/favorites`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ venue_id: venueId })
+                });
             }
-        });
+
+            const result = await response.json();
+
+            if (result.success) {
+                // Обновляем UI
+                this.updateFavoriteButton(button, !isFavorite);
+
+                // Обновляем все кнопки для этого venue
+                const allFavoriteButtons = document.querySelectorAll(`[data-venue-id="${venueId}"]`);
+                allFavoriteButtons.forEach(btn => {
+                    if (btn.classList.contains('favorite-btn') || btn.classList.contains('event-favorite-btn')) {
+                        this.updateFavoriteButton(btn, !isFavorite);
+                    }
+                });
+
+                // Показываем уведомление
+                const message = isFavorite ?
+                    CONSTANTS.SUCCESS_MESSAGES.FAVORITE_REMOVED :
+                    CONSTANTS.SUCCESS_MESSAGES.FAVORITE_ADDED;
+                Helpers.UI.showToast(message, CONSTANTS.TOAST_TYPES.SUCCESS);
+
+                // Обновляем local storage для быстрого доступа
+                if (isFavorite) {
+                    Storage.Favorites.remove(venueId);
+                } else {
+                    Storage.Favorites.add(venueId, { name: 'Venue' });
+                }
+
+                console.log('✅ Favorite status updated:', result);
+
+            } else {
+                throw new Error(result.message || 'Failed to update favorite status');
+            }
+
+        } catch (error) {
+            console.error('❌ Favorite toggle failed:', error);
+
+            // Восстанавливаем оригинальное состояние
+            button.innerHTML = originalContent;
+
+            // Показываем ошибку
+            let errorMessage = 'Failed to update favorites';
+            if (error.message.includes('Authentication required')) {
+                errorMessage = 'Please log in to manage favorites';
+                if (window.Navbar) {
+                    Navbar.showAuthModal('login');
+                }
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+
+            Helpers.UI.showToast(errorMessage, CONSTANTS.TOAST_TYPES.ERROR);
+        } finally {
+            button.disabled = false;
+        }
     },
 
     // Update favorite button appearance
@@ -397,6 +475,59 @@ const VenueCard = {
                 button.innerHTML = '🤍 Add to Favorites';
             }
         }
+    },
+
+    async loadUserFavorites() {
+        if (!Storage.Auth.isAuthenticated()) {
+            return;
+        }
+
+        const token = Storage.Auth.getToken();
+
+        try {
+            const response = await fetch(`${CONFIG.API.BASE_URL}/favorites`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+
+                if (result.success && result.data) {
+                    // Обновляем local storage
+                    Storage.Favorites.clear();
+                    result.data.forEach(favorite => {
+                        Storage.Favorites.add(favorite.venue_id, {
+                            name: favorite.name,
+                            type: favorite.type,
+                            district: favorite.district
+                        });
+                    });
+
+                    // Обновляем UI для всех карточек
+                    result.data.forEach(favorite => {
+                        const buttons = document.querySelectorAll(`[data-venue-id="${favorite.venue_id}"]`);
+                        buttons.forEach(btn => {
+                            if (btn.classList.contains('favorite-btn') || btn.classList.contains('event-favorite-btn')) {
+                                this.updateFavoriteButton(btn, true);
+                            }
+                        });
+                    });
+
+                    console.log('✅ User favorites loaded:', result.data.length, 'items');
+                }
+            }
+        } catch (error) {
+            console.error('❌ Failed to load user favorites:', error);
+        }
+    },
+
+    isFavorite(venueId) {
+        // Проверяем в local storage (синхронизируется с сервером)
+        return Storage.Favorites.isFavorite(venueId);
     },
 
     // Share venue

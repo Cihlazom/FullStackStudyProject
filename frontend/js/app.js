@@ -65,6 +65,11 @@ const App = {
         // Initialize navbar
         Navbar.init();
 
+        // Initialize auth utilities
+        if (window.AuthUtils) {
+            AuthUtils.init();
+        }
+
         // Initialize search component
         // if (window.SearchFilters) {
         //     SearchFilters.init();
@@ -108,6 +113,10 @@ const App = {
                 }
             }
 
+            if (Storage.Auth.isAuthenticated() && window.VenueCard) {
+                await VenueCard.loadUserFavorites();
+            }
+
             console.log('📊 Initial data loaded');
         } catch (error) {
             console.error('Error loading initial data:', error);
@@ -116,6 +125,14 @@ const App = {
             this.state.isLoading = false;
             Helpers.UI.hideLoading();
         }
+    },
+
+    async onUserLogin() {
+        // Вызывается после успешного логина
+        if (window.VenueCard) {
+            await VenueCard.loadUserFavorites();
+        }
+        console.log('🔄 User data refreshed after login');
     },
 
     // Load venues with current filters - UPDATED WITH SEARCH SUPPORT

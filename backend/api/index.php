@@ -1,5 +1,4 @@
 <?php
-// Main API Router for Barcelona Local Platform
 
 // Set headers for CORS and JSON
 header("Access-Control-Allow-Origin: *");
@@ -27,8 +26,12 @@ $path = str_replace('/FullStackStudyProject/backend/api', '', $path);
 // Split path into segments
 $segments = explode('/', trim($path, '/'));
 
-// Debug: remove this after testing
-// echo "Debug - Path: " . $path . " | Segments: " . json_encode($segments) . "\n";
+// Debug logging
+error_log("=== API REQUEST ===");
+error_log("Method: " . $method);
+error_log("Path: " . $path);
+error_log("Segments: " . print_r($segments, true));
+error_log("==================");
 
 // If no specific endpoint, default to venues for testing
 if (empty($segments[0]) || $segments[0] === '') {
@@ -50,11 +53,15 @@ try {
             handleAuth($method, $segments);
             break;
 
+        case 'favorites':
+            handleFavorites($method, $segments);
+            break;
+
         default:
             http_response_code(404);
             echo json_encode([
                 'success' => false,
-                'message' => 'Endpoint not found'
+                'message' => 'Endpoint not found: ' . $segments[0]
             ]);
             break;
     }
@@ -68,22 +75,32 @@ try {
 
 // Handle venues endpoints
 function handleVenues($method, $segments) {
-    include_once 'venues.php';
+    error_log("=== ROUTING TO VENUES.PHP ===");
+    include 'venues.php';
     exit();
 }
 
-// Handle events endpoints - ИСПРАВЛЕНО!
+// Handle events endpoints
 function handleEvents($method, $segments) {
+    error_log("=== ROUTING TO EVENTS.PHP ===");
     include 'events.php';
     exit();
 }
 
-// Handle auth endpoints (placeholder for now)
+// Handle auth endpoints - НОВОЕ!
 function handleAuth($method, $segments) {
-    http_response_code(501);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Authentication endpoints not implemented yet'
-    ]);
+    error_log("=== ROUTING TO AUTH.PHP ===");
+    error_log("Auth endpoint: " . ($segments[1] ?? 'none'));
+    include 'auth.php';
+    exit();
 }
+
+function handleFavorites($method, $segments) {
+    error_log("=== ROUTING TO FAVORITES.PHP ===");
+    error_log("Favorites method: " . $method);
+    error_log("Favorites segments: " . print_r($segments, true));
+    include 'favorites.php';
+    exit();
+}
+
 ?>
