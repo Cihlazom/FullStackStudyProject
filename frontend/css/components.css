@@ -722,6 +722,26 @@
     min-width: 80px;
 }
 
+/* Modal favorite button states */
+.venue-actions-modal .btn.btn-error {
+    color: var(--white);
+}
+
+.venue-actions-modal .btn.btn-error:hover {
+    transform: translateY(-2px);
+}
+
+.venue-actions-modal .btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Loading state for modal buttons */
+.venue-actions-modal .btn:disabled:hover {
+    transform: none;
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
     .nav-menu {

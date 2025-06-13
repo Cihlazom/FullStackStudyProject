@@ -199,6 +199,11 @@ const VenueCard = {
                 throw new Error(data.message || 'Failed to fetch venue details');
             }
 
+            // ДОБАВЛЕНО: Обновляем favorites перед рендером модала
+            if (Storage.Auth.isAuthenticated()) {
+                await this.loadUserFavorites();
+            }
+
             this.renderVenueModal(data.data);
 
         } catch (error) {
@@ -216,7 +221,10 @@ const VenueCard = {
 
         if (!modal || !modalBody) return;
 
-        const isFavorite = Storage.Favorites.isFavorite(venue.id);
+        // ПРАВИЛЬНАЯ проверка избранного
+        const isFavorite = this.isFavorite(venue.id);
+        console.log('🔍 Modal venue favorite status:', venue.id, isFavorite);
+
         const priceSymbol = this.getPriceSymbol(venue.price_range || venue.priceRange);
 
         // Parse features and hours from JSON if they're strings
@@ -240,101 +248,104 @@ const VenueCard = {
         }
 
         modalBody.innerHTML = `
-      <div class="venue-details">
-        <div class="venue-hero">
-          <img src="${venue.image || CONSTANTS.IMAGE.PLACEHOLDER}" alt="${venue.name}" class="venue-hero-image">
-          <div class="venue-hero-overlay">
-            <h1 class="venue-title">${venue.name}</h1>
-            <div class="venue-meta">
-              <span class="venue-type">${Helpers.String.capitalize(venue.type)}</span>
-              <span class="venue-rating">
-                ${this.createStars(venue.rating)} ${venue.rating}
-              </span>
-              <span class="venue-price">${priceSymbol}</span>
+        <div class="venue-details">
+            <div class="venue-hero">
+                <img src="${venue.image || CONSTANTS.IMAGE.PLACEHOLDER}" alt="${venue.name}" class="venue-hero-image">
+                <div class="venue-hero-overlay">
+                    <h1 class="venue-title">${venue.name}</h1>
+                    <div class="venue-meta">
+                        <span class="venue-type">${Helpers.String.capitalize(venue.type)}</span>
+                        <span class="venue-rating">
+                            ${this.createStars(venue.rating)} ${venue.rating}
+                        </span>
+                        <span class="venue-price">${priceSymbol}</span>
+                    </div>
+                </div>
             </div>
-          </div>
-        </div>
-        
-        <div class="venue-info-grid">
-          <div class="venue-main-info">
-            <h3>About</h3>
-            <p>${venue.description || 'No description available.'}</p>
             
-            ${features && features.length > 0 ? `
-            <h3>Features</h3>
-            <div class="features-list">
-              ${features.map(feature =>
+            <div class="venue-info-grid">
+                <div class="venue-main-info">
+                    <h3>About</h3>
+                    <p>${venue.description || 'No description available.'}</p>
+                    
+                    ${features && features.length > 0 ? `
+                    <h3>Features</h3>
+                    <div class="features-list">
+                        ${features.map(feature =>
             `<span class="feature-tag">${feature}</span>`
         ).join('')}
-            </div>
-            ` : ''}
-            
-            ${hours && Object.keys(hours).length > 0 ? `
-            <h3>Opening Hours</h3>
-            <div class="hours-list">
-              ${Object.entries(hours).map(([day, time]) =>
+                    </div>
+                    ` : ''}
+                    
+                    ${hours && Object.keys(hours).length > 0 ? `
+                    <h3>Opening Hours</h3>
+                    <div class="hours-list">
+                        ${Object.entries(hours).map(([day, time]) =>
             `<div class="hours-item">
-                  <span class="day">${Helpers.String.capitalize(day)}</span>
-                  <span class="hours">${time}</span>
-                </div>`
+                                <span class="day">${Helpers.String.capitalize(day)}</span>
+                                <span class="hours">${time}</span>
+                            </div>`
         ).join('')}
-            </div>
-            ` : ''}
-            
-            ${venue.reviews && venue.reviews.length > 0 ? `
-            <h3>Recent Reviews</h3>
-            <div class="reviews-list">
-              ${venue.reviews.slice(0, 3).map(review => `
-                <div class="review-item">
-                  <div class="review-header">
-                    <span class="reviewer-name">${review.user_name || 'Anonymous'}</span>
-                    <span class="review-rating">${this.createStars(review.rating)}</span>
-                  </div>
-                  <p class="review-text">${review.comment || review.review}</p>
-                  <span class="review-date">${Helpers.Date.format(review.created_at || review.date)}</span>
+                    </div>
+                    ` : ''}
+                    
+                    ${venue.reviews && venue.reviews.length > 0 ? `
+                    <h3>Recent Reviews</h3>
+                    <div class="reviews-list">
+                        ${venue.reviews.slice(0, 3).map(review => `
+                            <div class="review-item">
+                                <div class="review-header">
+                                    <span class="reviewer-name">${review.user_name || 'Anonymous'}</span>
+                                    <span class="review-rating">${this.createStars(review.rating)}</span>
+                                </div>
+                                <p class="review-text">${review.comment || review.review}</p>
+                                <span class="review-date">${Helpers.Date.format(review.created_at || review.date)}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                    ` : ''}
                 </div>
-              `).join('')}
+                
+                <div class="venue-contact-info">
+                    <h3>Contact & Location</h3>
+                    <div class="contact-item">
+                        <span class="icon">📍</span>
+                        <span>${venue.address || venue.district + ', Barcelona'}</span>
+                    </div>
+                    
+                    ${venue.phone ? `
+                        <div class="contact-item">
+                            <span class="icon">📞</span>
+                            <a href="tel:${venue.phone}">${venue.phone}</a>
+                        </div>
+                    ` : ''}
+                    
+                    ${venue.website ? `
+                        <div class="contact-item">
+                            <span class="icon">🌐</span>
+                            <a href="${venue.website}" target="_blank">Visit Website</a>
+                        </div>
+                    ` : ''}
+                    
+                    <div class="venue-actions-modal">
+                        <button class="btn btn-primary ${isFavorite ? 'btn-error' : ''}" 
+                                id="modal-favorite-btn" 
+                                data-venue-id="${venue.id}"
+                                data-is-favorite="${isFavorite}">
+                            ${isFavorite ? '❤️ Remove from Favorites' : '🤍 Add to Favorites'}
+                        </button>
+                        <button class="btn btn-secondary" id="modal-share-btn" data-venue-id="${venue.id}">
+                            Share Venue
+                        </button>
+                        ${venue.website ? `
+                            <button class="btn btn-secondary" onclick="window.open('${venue.website}', '_blank')">
+                                Visit Website
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
             </div>
-            ` : ''}
-          </div>
-          
-          <div class="venue-contact-info">
-            <h3>Contact & Location</h3>
-            <div class="contact-item">
-              <span class="icon">📍</span>
-              <span>${venue.address || venue.district + ', Barcelona'}</span>
-            </div>
-            
-            ${venue.phone ? `
-              <div class="contact-item">
-                <span class="icon">📞</span>
-                <a href="tel:${venue.phone}">${venue.phone}</a>
-              </div>
-            ` : ''}
-            
-            ${venue.website ? `
-              <div class="contact-item">
-                <span class="icon">🌐</span>
-                <a href="${venue.website}" target="_blank">Visit Website</a>
-              </div>
-            ` : ''}
-            
-            <div class="venue-actions-modal">
-              <button class="btn btn-primary" id="modal-favorite-btn" data-venue-id="${venue.id}">
-                ${isFavorite ? '❤️ Remove from Favorites' : '🤍 Add to Favorites'}
-              </button>
-              <button class="btn btn-secondary" id="modal-share-btn" data-venue-id="${venue.id}">
-                Share Venue
-              </button>
-              ${venue.website ? `
-                <button class="btn btn-secondary" onclick="window.open('${venue.website}', '_blank')">
-                  Visit Website
-                </button>
-              ` : ''}
-            </div>
-          </div>
         </div>
-      </div>
     `;
 
         // Show modal
@@ -345,8 +356,34 @@ const VenueCard = {
         const modalShareBtn = Helpers.DOM.get('modal-share-btn');
 
         if (modalFavoriteBtn) {
+            // ИСПРАВЛЕННЫЙ обработчик - учитываем текущее состояние
             modalFavoriteBtn.addEventListener('click', () => {
-                this.toggleFavorite(venue.id, modalFavoriteBtn);
+                // Создаем временную кнопку для совместимости с toggleFavorite
+                const tempButton = {
+                    classList: {
+                        contains: (className) => className === 'active' ? isFavorite : false,
+                        add: (className) => {
+                            if (className === 'active') {
+                                modalFavoriteBtn.dataset.isFavorite = 'true';
+                                modalFavoriteBtn.classList.add('btn-error');
+                                modalFavoriteBtn.innerHTML = '❤️ Remove from Favorites';
+                            }
+                        },
+                        remove: (className) => {
+                            if (className === 'active') {
+                                modalFavoriteBtn.dataset.isFavorite = 'false';
+                                modalFavoriteBtn.classList.remove('btn-error');
+                                modalFavoriteBtn.innerHTML = '🤍 Add to Favorites';
+                            }
+                        }
+                    },
+                    innerHTML: modalFavoriteBtn.innerHTML,
+                    disabled: false,
+                    title: modalFavoriteBtn.title
+                };
+
+                // Передаем в toggleFavorite с правильным состоянием
+                this.toggleFavoriteModal(venue.id, modalFavoriteBtn);
             });
         }
 
@@ -354,6 +391,117 @@ const VenueCard = {
             modalShareBtn.addEventListener('click', () => {
                 this.shareVenue(venue.id);
             });
+        }
+    },
+
+    async toggleFavoriteModal(venueId, button) {
+        // Проверяем авторизацию
+        if (!Storage.Auth.isAuthenticated()) {
+            Helpers.UI.showToast('Please log in to add favorites', CONSTANTS.TOAST_TYPES.WARNING);
+            if (window.Navbar) {
+                Navbar.showAuthModal('login');
+            }
+            return;
+        }
+
+        // Получаем текущее состояние из data-attribute
+        const isFavorite = button.dataset.isFavorite === 'true';
+        const token = Storage.Auth.getToken();
+
+        console.log('🔄 Toggling favorite in modal:', venueId, 'Current state:', isFavorite);
+
+        // Показываем loading состояние
+        const originalContent = button.innerHTML;
+        button.innerHTML = isFavorite ? '⏳ Removing...' : '⏳ Adding...';
+        button.disabled = true;
+
+        try {
+            let response;
+
+            if (isFavorite) {
+                // Удаляем из избранного
+                response = await fetch(`${CONFIG.API.BASE_URL}/favorites/${venueId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+            } else {
+                // Добавляем в избранное
+                response = await fetch(`${CONFIG.API.BASE_URL}/favorites`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ venue_id: venueId })
+                });
+            }
+
+            const result = await response.json();
+
+            if (result.success) {
+                // Обновляем состояние кнопки
+                const newIsFavorite = !isFavorite;
+                button.dataset.isFavorite = newIsFavorite.toString();
+
+                if (newIsFavorite) {
+                    button.classList.add('btn-error');
+                    button.innerHTML = '❤️ Remove from Favorites';
+                } else {
+                    button.classList.remove('btn-error');
+                    button.innerHTML = '🤍 Add to Favorites';
+                }
+
+                // Обновляем все остальные кнопки для этого venue
+                const allFavoriteButtons = document.querySelectorAll(`[data-venue-id="${venueId}"]`);
+                allFavoriteButtons.forEach(btn => {
+                    if (btn !== button && (btn.classList.contains('favorite-btn') || btn.classList.contains('event-favorite-btn'))) {
+                        this.updateFavoriteButton(btn, newIsFavorite);
+                    }
+                });
+
+                // Обновляем local storage
+                if (newIsFavorite) {
+                    Storage.Favorites.add(venueId, { name: 'Venue' });
+                } else {
+                    Storage.Favorites.remove(venueId);
+                }
+
+                if (window.FavoriteSync) {
+                    FavoriteSync.notifyFavoriteChanged(venueId, newIsFavorite);
+                }
+
+                // Показываем уведомление
+                const message = newIsFavorite ?
+                    CONSTANTS.SUCCESS_MESSAGES.FAVORITE_ADDED :
+                    CONSTANTS.SUCCESS_MESSAGES.FAVORITE_REMOVED;
+                Helpers.UI.showToast(message, CONSTANTS.TOAST_TYPES.SUCCESS);
+
+                console.log('✅ Modal favorite status updated:', result);
+
+            } else {
+                throw new Error(result.message || 'Failed to update favorite status');
+            }
+
+        } catch (error) {
+            console.error('❌ Modal favorite toggle failed:', error);
+
+            // Восстанавливаем оригинальное состояние
+            button.innerHTML = originalContent;
+
+            // Показываем ошибку
+            let errorMessage = 'Failed to update favorites';
+            if (error.message.includes('Authentication required')) {
+                errorMessage = 'Please log in to manage favorites';
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+
+            Helpers.UI.showToast(errorMessage, CONSTANTS.TOAST_TYPES.ERROR);
+        } finally {
+            button.disabled = false;
         }
     },
 
@@ -403,29 +551,33 @@ const VenueCard = {
             const result = await response.json();
 
             if (result.success) {
-                // Обновляем UI
-                this.updateFavoriteButton(button, !isFavorite);
+                const newIsFavorite = !isFavorite;
 
-                // Обновляем все кнопки для этого venue
-                const allFavoriteButtons = document.querySelectorAll(`[data-venue-id="${venueId}"]`);
-                allFavoriteButtons.forEach(btn => {
-                    if (btn.classList.contains('favorite-btn') || btn.classList.contains('event-favorite-btn')) {
-                        this.updateFavoriteButton(btn, !isFavorite);
-                    }
-                });
+                // Обновляем local storage
+                if (newIsFavorite) {
+                    Storage.Favorites.add(venueId, { name: 'Venue' });
+                } else {
+                    Storage.Favorites.remove(venueId);
+                }
+
+                // НОВОЕ: Уведомляем систему синхронизации
+                if (window.FavoriteSync) {
+                    FavoriteSync.notifyFavoriteChanged(venueId, newIsFavorite);
+                } else {
+                    // Fallback: обновляем все кнопки вручную
+                    const allFavoriteButtons = document.querySelectorAll(`[data-venue-id="${venueId}"]`);
+                    allFavoriteButtons.forEach(btn => {
+                        if (btn.classList.contains('favorite-btn') || btn.classList.contains('event-favorite-btn')) {
+                            this.updateFavoriteButton(btn, newIsFavorite);
+                        }
+                    });
+                }
 
                 // Показываем уведомление
-                const message = isFavorite ?
-                    CONSTANTS.SUCCESS_MESSAGES.FAVORITE_REMOVED :
-                    CONSTANTS.SUCCESS_MESSAGES.FAVORITE_ADDED;
+                const message = newIsFavorite ?
+                    CONSTANTS.SUCCESS_MESSAGES.FAVORITE_ADDED :
+                    CONSTANTS.SUCCESS_MESSAGES.FAVORITE_REMOVED;
                 Helpers.UI.showToast(message, CONSTANTS.TOAST_TYPES.SUCCESS);
-
-                // Обновляем local storage для быстрого доступа
-                if (isFavorite) {
-                    Storage.Favorites.remove(venueId);
-                } else {
-                    Storage.Favorites.add(venueId, { name: 'Venue' });
-                }
 
                 console.log('✅ Favorite status updated:', result);
 
@@ -453,6 +605,29 @@ const VenueCard = {
             Helpers.UI.showToast(errorMessage, CONSTANTS.TOAST_TYPES.ERROR);
         } finally {
             button.disabled = false;
+        }
+    },
+
+    updateOpenModalFavoriteState(venueId) {
+        const modal = Helpers.DOM.get('venue-modal');
+        const modalFavoriteBtn = document.getElementById('modal-favorite-btn');
+
+        // Проверяем, открыт ли модал для этого venue
+        if (modal && modal.style.display === 'flex' &&
+            modalFavoriteBtn && modalFavoriteBtn.dataset.venueId === venueId) {
+
+            const isFavorite = this.isFavorite(venueId);
+            modalFavoriteBtn.dataset.isFavorite = isFavorite.toString();
+
+            if (isFavorite) {
+                modalFavoriteBtn.classList.add('btn-error');
+                modalFavoriteBtn.innerHTML = '❤️ Remove from Favorites';
+            } else {
+                modalFavoriteBtn.classList.remove('btn-error');
+                modalFavoriteBtn.innerHTML = '🤍 Add to Favorites';
+            }
+
+            console.log('🔄 Updated modal favorite state for venue:', venueId, isFavorite);
         }
     },
 
