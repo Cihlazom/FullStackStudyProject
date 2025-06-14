@@ -1,5 +1,4 @@
 <?php
-// Database connection for Barcelona Local Platform
 
 class Database {
     private $host = "localhost";
@@ -8,7 +7,6 @@ class Database {
     private $password = "";
     private $conn;
 
-    // Get database connection
     public function getConnection() {
         $this->conn = null;
 

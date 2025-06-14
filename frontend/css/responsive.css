@@ -118,6 +118,7 @@
     }
 
     .auth-modal {
+        justify-self: center;
         padding: var(--spacing-5);
     }
 
@@ -316,6 +317,7 @@
 
     /* Auth modal */
     .auth-modal {
+        justify-self: center;
         padding: var(--spacing-4);
         width: calc(100vw - var(--spacing-8));
     }

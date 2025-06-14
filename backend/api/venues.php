@@ -1,28 +1,9 @@
 <?php
-error_log("=== VENUES.PHP2 LOADED ===");
-
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
-// Enhanced Venues API endpoint with search functionality
-
-// Set headers for CORS and JSON
-header("Access-Control-Allow-Origin: *");
-header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
-
-// Handle preflight requests
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     http_response_code(200);
     exit();
 }
 
-// Include database connection
-include_once 'database.php';
-
-// Get request method
 $method = $_SERVER['REQUEST_METHOD'];
 
 try {
@@ -56,24 +37,15 @@ try {
     ]);
 }
 
-// Enhanced venues function with search support
 function getVenues() {
     $database = new Database();
     $db = $database->getConnection();
 
     try {
-        // Check for search parameter
         $searchQuery = $_GET['search'] ?? '';
         $searchQuery = trim($searchQuery);
 
-        error_log("=== SEARCH DEBUG ===");
-        error_log($searchQuery);
-        error_log("===================");
-
-
-        // Build base query
         if (!empty($searchQuery)) {
-            // Search query with relevance scoring
             $query = "SELECT *,
                              (CASE
                                 WHEN name LIKE :exact_match THEN 100
@@ -102,12 +74,10 @@ function getVenues() {
                 ':search_term' => '%' . $searchQuery . '%'
             ];
         } else {
-            // Regular query without search
             $query = "SELECT *, 0 as relevance_score FROM venues WHERE is_active = 1";
             $params = [];
         }
 
-        // Add additional filters
         if (isset($_GET['type']) && !empty($_GET['type'])) {
             $query .= " AND type = :type";
             $params[':type'] = $_GET['type'];
@@ -123,21 +93,18 @@ function getVenues() {
             $params[':price_range'] = $_GET['priceRange'];
         }
 
-        // Add ordering - search results by relevance, others by rating
         if (!empty($searchQuery)) {
             $query .= " ORDER BY relevance_score DESC, rating DESC, name ASC";
         } else {
             $query .= " ORDER BY rating DESC, name ASC";
         }
 
-        // Add pagination
         $limit = isset($_GET['limit']) ? min(50, max(1, intval($_GET['limit']))) : 12;
         $offset = isset($_GET['page']) ? (max(1, intval($_GET['page'])) - 1) * $limit : 0;
         $query .= " LIMIT :limit OFFSET :offset";
 
         $stmt = $db->prepare($query);
 
-        // Bind all parameters
         foreach ($params as $key => $value) {
             $stmt->bindValue($key, $value);
         }
@@ -147,28 +114,21 @@ function getVenues() {
         $stmt->execute();
         $venues = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Process venues data
         foreach ($venues as &$venue) {
-            // Decode JSON fields
             $venue['features'] = json_decode($venue['features'], true) ?: [];
             $venue['hours'] = json_decode($venue['hours'], true) ?: [];
 
-            // Add distance placeholder (you can implement real distance calculation later)
             $venue['distance'] = round(rand(5, 30) / 10, 1);
 
-            // Format rating
             $venue['rating'] = floatval($venue['rating']);
 
-            // Add search relevance for debugging (remove in production)
             if (!empty($searchQuery)) {
                 $venue['search_relevance'] = intval($venue['relevance_score']);
             }
 
-            // Remove relevance_score from final output
             unset($venue['relevance_score']);
         }
 
-        // Get total count for pagination - use same search criteria
         if (!empty($searchQuery)) {
             $countQuery = "SELECT COUNT(*) as total FROM venues
                            WHERE is_active = 1 AND (
@@ -183,7 +143,6 @@ function getVenues() {
             $countParams = [];
         }
 
-        // Add same filters to count query
         if (isset($_GET['type']) && !empty($_GET['type'])) {
             $countQuery .= " AND type = :type";
             $countParams[':type'] = $_GET['type'];
@@ -204,7 +163,6 @@ function getVenues() {
         $countStmt->execute();
         $total = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
 
-        // Prepare response
         $response = [
             'success' => true,
             'data' => $venues,
@@ -213,7 +171,6 @@ function getVenues() {
             'limit' => $limit
         ];
 
-        // Add search info if there was a search
         if (!empty($searchQuery)) {
             $response['search_query'] = $searchQuery;
             $response['search_results'] = count($venues);
@@ -231,7 +188,6 @@ function getVenues() {
     }
 }
 
-// Get single venue by ID
 function getVenue($venueId) {
     $database = new Database();
     $db = $database->getConnection();
@@ -253,12 +209,10 @@ function getVenue($venueId) {
             return;
         }
 
-        // Process venue data
         $venue['features'] = json_decode($venue['features'], true) ?: [];
         $venue['hours'] = json_decode($venue['hours'], true) ?: [];
         $venue['rating'] = floatval($venue['rating']);
 
-        // Get reviews for this venue (if reviews table exists)
         try {
             $reviewQuery = "SELECT r.*, u.name as user_name FROM reviews r
                            LEFT JOIN users u ON r.user_id = u.id
@@ -269,7 +223,6 @@ function getVenue($venueId) {
             $reviewStmt->execute();
             $reviews = $reviewStmt->fetchAll(PDO::FETCH_ASSOC);
 
-            // Format reviews
             foreach ($reviews as &$review) {
                 $review['rating'] = intval($review['rating']);
                 $review['date'] = date('Y-m-d', strtotime($review['created_at']));
@@ -277,7 +230,6 @@ function getVenue($venueId) {
 
             $venue['reviews'] = $reviews;
         } catch (Exception $e) {
-            // Reviews table might not exist yet, that's okay
             $venue['reviews'] = [];
         }
 

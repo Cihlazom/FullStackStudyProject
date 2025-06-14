@@ -588,10 +588,8 @@ const VenueCard = {
         } catch (error) {
             console.error('❌ Favorite toggle failed:', error);
 
-            // Восстанавливаем оригинальное состояние
             button.innerHTML = originalContent;
 
-            // Показываем ошибку
             let errorMessage = 'Failed to update favorites';
             if (error.message.includes('Authentication required')) {
                 errorMessage = 'Please log in to manage favorites';
@@ -654,6 +652,7 @@ const VenueCard = {
 
     async loadUserFavorites() {
         if (!Storage.Auth.isAuthenticated()) {
+            console.log('📋 User not authenticated, favorites will be stored locally');
             return;
         }
 
@@ -672,8 +671,10 @@ const VenueCard = {
                 const result = await response.json();
 
                 if (result.success && result.data) {
-                    // Обновляем local storage
+                    // ИЗМЕНЕНО: Очищаем текущее избранное пользователя перед загрузкой с сервера
                     Storage.Favorites.clear();
+
+                    // Загружаем избранное с сервера
                     result.data.forEach(favorite => {
                         Storage.Favorites.add(favorite.venue_id, {
                             name: favorite.name,
@@ -692,12 +693,49 @@ const VenueCard = {
                         });
                     });
 
-                    console.log('✅ User favorites loaded:', result.data.length, 'items');
+                    console.log('✅ User favorites loaded from server:', result.data.length, 'items');
                 }
             }
         } catch (error) {
-            console.error('❌ Failed to load user favorites:', error);
+            console.error('❌ Failed to load user favorites from server:', error);
+            console.log('📋 Will use local favorites instead');
         }
+    },
+
+    refreshFavoritesUI() {
+        // Получаем текущее избранное пользователя
+        const currentFavorites = Storage.Favorites.get();
+        const favoriteIds = currentFavorites.map(fav => fav.venueId);
+
+        // Обновляем все кнопки избранного на странице
+        const allFavoriteButtons = document.querySelectorAll('.favorite-btn, .event-favorite-btn');
+        allFavoriteButtons.forEach(btn => {
+            const venueId = btn.dataset.venueId;
+            if (venueId) {
+                const isFavorite = favoriteIds.includes(venueId);
+                this.updateFavoriteButton(btn, isFavorite);
+            }
+        });
+
+        // Обновляем модальные окна, если открыты
+        const modalFavoriteBtn = document.getElementById('modal-favorite-btn');
+        if (modalFavoriteBtn) {
+            const venueId = modalFavoriteBtn.dataset.venueId;
+            if (venueId) {
+                const isFavorite = favoriteIds.includes(venueId);
+                modalFavoriteBtn.dataset.isFavorite = isFavorite.toString();
+
+                if (isFavorite) {
+                    modalFavoriteBtn.classList.add('btn-error');
+                    modalFavoriteBtn.innerHTML = '❤️ Remove from Favorites';
+                } else {
+                    modalFavoriteBtn.classList.remove('btn-error');
+                    modalFavoriteBtn.innerHTML = '🤍 Add to Favorites';
+                }
+            }
+        }
+
+        console.log('🔄 Favorites UI refreshed for current user');
     },
 
     isFavorite(venueId) {

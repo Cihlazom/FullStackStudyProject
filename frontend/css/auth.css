@@ -1,7 +1,5 @@
-/* Добавьте эти стили в frontend/css/components.css */
-
-/* Enhanced Auth Modal */
 .auth-modal {
+    justify-self: center;
     padding: var(--spacing-8);
     max-width: 500px;
     width: 100%;
@@ -66,7 +64,6 @@
     border-color: var(--success-color);
 }
 
-/* Interests Grid */
 .interests-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -132,7 +129,6 @@
     transition: all var(--transition-base);
 }
 
-/* Submit Button */
 .auth-form .btn {
     width: 100%;
     padding: var(--spacing-4) var(--spacing-6);
@@ -165,7 +161,6 @@
     left: 100%;
 }
 
-/* Auth Switch */
 .auth-switch {
     text-align: center;
     padding-top: var(--spacing-6);
@@ -190,7 +185,6 @@
     text-decoration: underline;
 }
 
-/* User Menu in Navbar */
 .user-menu {
     display: flex;
     align-items: center;
@@ -203,7 +197,6 @@
     font-size: var(--font-size-base);
 }
 
-/* Loading States */
 .auth-form .btn.loading {
     pointer-events: none;
     position: relative;
@@ -228,7 +221,6 @@
     100% { transform: rotate(360deg); }
 }
 
-/* Form Validation Messages */
 .form-error {
     color: var(--error-color);
     font-size: var(--font-size-sm);
@@ -245,13 +237,11 @@
     background: rgba(239, 68, 68, 0.05);
 }
 
-/* Success state */
 .form-group.success .form-input {
     border-color: var(--success-color);
     background: rgba(16, 185, 129, 0.05);
 }
 
-/* Password Strength Indicator */
 .password-strength {
     margin-top: var(--spacing-2);
     display: none;
@@ -300,7 +290,6 @@
     color: var(--gray-600);
 }
 
-/* Mobile Responsive */
 @media (max-width: 768px) {
     .auth-modal {
         padding: var(--spacing-6);

@@ -1,10 +1,7 @@
-// Updated App.js with search functionality
 const App = {
-    // Application state
     state: {
         currentPage: 'home',
         venues: [],
-        events: [],
         isLoading: false,
         filters: {
             query: '',
@@ -101,11 +98,9 @@ const App = {
         try {
             this.state.isLoading = true;
 
-            // Load venues only if we're on the home page
             if (Router.currentRoute === 'home') {
                 Helpers.UI.showLoading();
 
-                // Load filters from URL if any
                 if (window.SearchFilters) {
                     SearchFilters.loadFiltersFromURL();
                 } else {
@@ -131,6 +126,8 @@ const App = {
         // Вызывается после успешного логина
         if (window.VenueCard) {
             await VenueCard.loadUserFavorites();
+            // ДОБАВЛЕНО: Обновляем UI после загрузки избранного
+            VenueCard.refreshFavoritesUI();
         }
         console.log('🔄 User data refreshed after login');
     },
@@ -443,57 +440,6 @@ const App = {
         }
     },
 
-    async loadEvents() {
-        try {
-            const response = await fetch(`${CONFIG.API.BASE_URL}/${CONFIG.API.ENDPOINTS.EVENTS.LIST}`);
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-
-            if (!data.success) {
-                throw new Error(data.message || 'Failed to fetch events');
-            }
-
-            this.state.events = data.data;
-
-            console.log(`🎉 Loaded ${data.data.length} events from API`);
-            return data.data;
-
-        } catch (error) {
-            console.error('Error loading events:', error);
-            Helpers.UI.showToast('Failed to load events', CONSTANTS.TOAST_TYPES.ERROR);
-            return [];
-        }
-    },
-
-    async testAPIConnection() {
-        try {
-            console.log('🔍 Testing API connection...');
-
-            const venuesResponse = await fetch(`${CONFIG.API.BASE_URL}/venues?limit=1`);
-            console.log('Venues API status:', venuesResponse.status);
-
-            const eventsResponse = await fetch(`${CONFIG.API.BASE_URL}/events`);
-            console.log('Events API status:', eventsResponse.status);
-
-            if (venuesResponse.ok && eventsResponse.ok) {
-                console.log('✅ API connection successful');
-                Helpers.UI.showToast('Connected to server!', CONSTANTS.TOAST_TYPES.SUCCESS);
-                return true;
-            } else {
-                throw new Error('API endpoints not responding correctly');
-            }
-
-        } catch (error) {
-            console.error('❌ API connection failed:', error);
-            Helpers.UI.showToast('Server connection failed', CONSTANTS.TOAST_TYPES.ERROR);
-            return false;
-        }
-    },
-
     bindGlobalEvents() {
         window.addEventListener('popstate', (e) => {
             this.handleRouteChange();
@@ -548,14 +494,10 @@ const App = {
     }
 };
 
-// Initialize app when DOM is loaded
+
 document.addEventListener('DOMContentLoaded', () => {
     App.init();
     App.utils.logAppInfo();
-
-    setTimeout(() => {
-        App.testAPIConnection();
-    }, 1000);
 });
 
 window.App = App;

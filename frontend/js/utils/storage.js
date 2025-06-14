@@ -1,6 +1,4 @@
-// Local Storage management for Barcelona Local Platform
 const Storage = {
-    // Check if localStorage is available
     isAvailable() {
         try {
             const test = '__localStorage_test__';
@@ -77,7 +75,6 @@ const Storage = {
         }
     },
 
-    // Get all keys
     getAllKeys() {
         if (!this.isAvailable()) {
             return [];
@@ -91,24 +88,19 @@ const Storage = {
         }
     },
 
-    // App-specific methods using CONFIG keys
     Auth: {
-        // Save auth token
         setToken(token) {
             return Storage.set(CONSTANTS.STORAGE_KEYS.AUTH_TOKEN, token);
         },
 
-        // Get auth token
         getToken() {
             return Storage.get(CONSTANTS.STORAGE_KEYS.AUTH_TOKEN);
         },
 
-        // Remove auth token
         removeToken() {
             return Storage.remove(CONSTANTS.STORAGE_KEYS.AUTH_TOKEN);
         },
 
-        // Check if user is authenticated
         isAuthenticated() {
             const token = this.getToken();
             return token !== null && token !== undefined;
@@ -116,36 +108,31 @@ const Storage = {
     },
 
     User: {
-        // Save user data
         setData(userData) {
             return Storage.set(CONSTANTS.STORAGE_KEYS.USER_DATA, userData);
         },
 
-        // Get user data
         getData() {
             return Storage.get(CONSTANTS.STORAGE_KEYS.USER_DATA, {});
         },
 
-        // Update user data (merge with existing)
         updateData(updates) {
             const currentData = this.getData();
             const updatedData = { ...currentData, ...updates };
             return Storage.set(CONSTANTS.STORAGE_KEYS.USER_DATA, updatedData);
         },
 
-        // Remove user data
         removeData() {
             return Storage.remove(CONSTANTS.STORAGE_KEYS.USER_DATA);
         }
     },
 
+    // TODO: удалить скорее всего надо
     Preferences: {
-        // Save user preferences
         set(preferences) {
             return Storage.set(CONSTANTS.STORAGE_KEYS.PREFERENCES, preferences);
         },
 
-        // Get user preferences
         get() {
             return Storage.get(CONSTANTS.STORAGE_KEYS.PREFERENCES, {
                 theme: 'light',
@@ -158,20 +145,17 @@ const Storage = {
             });
         },
 
-        // Update preferences
         update(updates) {
             const current = this.get();
             const updated = { ...current, ...updates };
             return Storage.set(CONSTANTS.STORAGE_KEYS.PREFERENCES, updated);
         },
 
-        // Get specific preference
         getValue(key, defaultValue = null) {
             const preferences = this.get();
             return preferences[key] !== undefined ? preferences[key] : defaultValue;
         },
 
-        // Set specific preference
         setValue(key, value) {
             const preferences = this.get();
             preferences[key] = value;
@@ -180,7 +164,6 @@ const Storage = {
     },
 
     SearchHistory: {
-        // Add search to history
         add(searchQuery) {
             const history = this.get();
             const newEntry = {
@@ -189,7 +172,6 @@ const Storage = {
                 id: Helpers.Utils.generateId()
             };
 
-            // Add to beginning and limit to 50 entries
             const updatedHistory = [newEntry, ...history.filter(item =>
                 item.query.toLowerCase() !== searchQuery.toLowerCase()
             )].slice(0, 50);
@@ -197,33 +179,37 @@ const Storage = {
             return Storage.set(CONSTANTS.STORAGE_KEYS.SEARCH_HISTORY, updatedHistory);
         },
 
-        // Get search history
         get() {
             return Storage.get(CONSTANTS.STORAGE_KEYS.SEARCH_HISTORY, []);
         },
 
-        // Clear search history
         clear() {
             return Storage.set(CONSTANTS.STORAGE_KEYS.SEARCH_HISTORY, []);
         },
 
-        // Remove specific search
         remove(id) {
             const history = this.get();
             const filtered = history.filter(item => item.id !== id);
             return Storage.set(CONSTANTS.STORAGE_KEYS.SEARCH_HISTORY, filtered);
         },
 
-        // Get recent searches (last 10)
         getRecent() {
             return this.get().slice(0, 10);
         }
     },
 
     Favorites: {
-        // Add to favorites
+        getUserFavoritesKey() {
+            const userData = Storage.User.getData();
+            if (userData && userData.email) {
+                return `${CONSTANTS.STORAGE_KEYS.FAVORITES}_${userData.email}`;
+            }
+            return `${CONSTANTS.STORAGE_KEYS.FAVORITES}_guest`;
+        },
+
         add(venueId, venueData = {}) {
-            const favorites = this.get();
+            const key = this.getUserFavoritesKey();
+            const favorites = Storage.get(key, []);
             const newFavorite = {
                 venueId,
                 ...venueData,
@@ -232,43 +218,75 @@ const Storage = {
 
             if (!favorites.find(fav => fav.venueId === venueId)) {
                 favorites.push(newFavorite);
-                Storage.set(CONSTANTS.STORAGE_KEYS.FAVORITES, favorites);
+                Storage.set(key, favorites);
                 return true;
             }
             return false;
         },
 
-        // Remove from favorites
         remove(venueId) {
-            const favorites = this.get();
+            const key = this.getUserFavoritesKey();
+            const favorites = Storage.get(key, []);
             const filtered = favorites.filter(fav => fav.venueId !== venueId);
-            Storage.set(CONSTANTS.STORAGE_KEYS.FAVORITES, filtered);
+            Storage.set(key, filtered);
             return true;
         },
 
-        // Get all favorites
         get() {
-            return Storage.get(CONSTANTS.STORAGE_KEYS.FAVORITES, []);
+            const key = this.getUserFavoritesKey();
+            return Storage.get(key, []);
         },
 
-        // Check if venue is favorite
         isFavorite(venueId) {
             const favorites = this.get();
             return favorites.some(fav => fav.venueId === venueId);
         },
 
-        // Get favorites count
         getCount() {
             return this.get().length;
         },
 
-        // Clear all favorites
         clear() {
-            return Storage.set(CONSTANTS.STORAGE_KEYS.FAVORITES, []);
+            const key = this.getUserFavoritesKey();
+            return Storage.set(key, []);
+        },
+
+        // НОВЫЙ: Очистить избранное гостя при входе пользователя
+        // TODO: удалить скорее всего надо
+        clearGuestFavorites() {
+            const guestKey = `${CONSTANTS.STORAGE_KEYS.FAVORITES}_guest`;
+            return Storage.remove(guestKey);
+        },
+
+        // НОВЫЙ: Перенести избранное гостя к пользователю при входе
+        // TODO: удалить скорее всего надо
+        migrateGuestFavorites() {
+            const guestKey = `${CONSTANTS.STORAGE_KEYS.FAVORITES}_guest`;
+            const guestFavorites = Storage.get(guestKey, []);
+
+            if (guestFavorites.length > 0) {
+                const userKey = this.getUserFavoritesKey();
+                const userFavorites = Storage.get(userKey, []);
+
+                // Объединяем избранное, избегая дубликатов
+                const combined = [...userFavorites];
+                guestFavorites.forEach(guestFav => {
+                    if (!combined.find(userFav => userFav.venueId === guestFav.venueId)) {
+                        combined.push(guestFav);
+                    }
+                });
+
+                Storage.set(userKey, combined);
+                Storage.remove(guestKey); // Удаляем гостевое избранное
+
+                console.log(`📋 Migrated ${guestFavorites.length} guest favorites to user account`);
+                return combined.length;
+            }
+
+            return 0;
         }
     },
 
-    // Session storage for temporary data
     Session: {
         set(key, value) {
             if (typeof sessionStorage === 'undefined') return false;
@@ -319,9 +337,7 @@ const Storage = {
         }
     },
 
-    // Cache management for API responses
     Cache: {
-        // Cache with expiration
         set(key, data, expirationMinutes = 15) {
             const expirationTime = new Date().getTime() + (expirationMinutes * 60 * 1000);
             const cacheData = {
@@ -331,7 +347,6 @@ const Storage = {
             return Storage.set(`cache_${key}`, cacheData);
         },
 
-        // Get from cache if not expired
         get(key) {
             const cacheData = Storage.get(`cache_${key}`);
             if (!cacheData) return null;
@@ -344,12 +359,10 @@ const Storage = {
             return cacheData.data;
         },
 
-        // Remove from cache
         remove(key) {
             return Storage.remove(`cache_${key}`);
         },
 
-        // Clear all cache
         clearAll() {
             const keys = Storage.getAllKeys();
             keys.forEach(key => {
@@ -361,5 +374,4 @@ const Storage = {
     }
 };
 
-// Make Storage globally available
 window.Storage = Storage;

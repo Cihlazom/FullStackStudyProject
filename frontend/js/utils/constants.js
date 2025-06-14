@@ -60,15 +60,12 @@ const CONSTANTS = {
         PRICE_LOW: 'price_low',
         PRICE_HIGH: 'price_high',
         DISTANCE: 'distance',
-        NEWEST: 'newest'
     },
 
     // User Roles
     USER_ROLES: {
         STUDENT: 'student',
         EXPAT: 'expat',
-        DIGITAL_NOMAD: 'digital_nomad',
-        LOCAL: 'local'
     },
 
     // Validation Rules
@@ -76,8 +73,6 @@ const CONSTANTS = {
         EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
         PASSWORD_MIN_LENGTH: 6,
         NAME_MIN_LENGTH: 2,
-        REVIEW_MIN_LENGTH: 10,
-        REVIEW_MAX_LENGTH: 500
     },
 
     // Pagination
@@ -87,13 +82,13 @@ const CONSTANTS = {
         MAX_LIMIT: CONFIG.APP.PAGINATION.MAX_LIMIT
     },
 
-    // Map Settings
-    MAP_SETTINGS: {
-        DEFAULT_CENTER: CONFIG.MAP.DEFAULT_CENTER,
-        DEFAULT_ZOOM: CONFIG.MAP.DEFAULT_ZOOM,
-        MAX_ZOOM: 18,
-        MIN_ZOOM: 10
-    },
+    // // Map Settings
+    // MAP_SETTINGS: {
+    //     DEFAULT_CENTER: CONFIG.MAP.DEFAULT_CENTER,
+    //     DEFAULT_ZOOM: CONFIG.MAP.DEFAULT_ZOOM,
+    //     MAX_ZOOM: 18,
+    //     MIN_ZOOM: 10
+    // },
 
     // Rating Scale
     RATING: {
@@ -142,7 +137,6 @@ const CONSTANTS = {
         REGISTER: 'Account created successfully!',
         LOGOUT: 'Logged out successfully!',
         PROFILE_UPDATED: 'Profile updated successfully!',
-        REVIEW_SUBMITTED: 'Review submitted successfully!',
         FAVORITE_ADDED: 'Added to favorites!',
         FAVORITE_REMOVED: 'Removed from favorites!'
     }

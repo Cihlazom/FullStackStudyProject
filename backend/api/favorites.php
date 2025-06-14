@@ -1,20 +1,10 @@
 <?php
 
-header("Access-Control-Allow-Origin: *");
-header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
-
-// Handle preflight requests
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     http_response_code(200);
     exit();
 }
 
-// Include database and auth functions
-include_once 'database.php';
-
-// Include auth functions from auth.php
 function getAuthToken() {
     $headers = getallheaders();
 
@@ -38,7 +28,6 @@ function authenticateUser() {
     $database = new Database();
     $db = $database->getConnection();
 
-    // Get session and user data
     $query = "SELECT u.id, u.name, u.email, u.age_range, u.interests, s.expires_at
               FROM users u 
               JOIN user_sessions s ON u.id = s.user_id 
@@ -50,7 +39,6 @@ function authenticateUser() {
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($user) {
-        // Parse interests JSON
         if ($user['interests']) {
             $user['interests'] = json_decode($user['interests'], true);
         }
@@ -60,7 +48,6 @@ function authenticateUser() {
     return $user;
 }
 
-// Parse URL for endpoints
 $request = $_SERVER['REQUEST_URI'];
 $path = parse_url($request, PHP_URL_PATH);
 $path = str_replace('/FullStackStudyProject/backend/api', '', $path);
@@ -68,11 +55,6 @@ $segments = explode('/', trim($path, '/'));
 
 $method = $_SERVER['REQUEST_METHOD'];
 $input = json_decode(file_get_contents('php://input'), true);
-
-error_log("=== FAVORITES API ===");
-error_log("Method: " . $method);
-error_log("Segments: " . print_r($segments, true));
-error_log("Input: " . print_r($input, true));
 
 try {
     switch ($method) {
@@ -108,7 +90,6 @@ try {
     ]);
 }
 
-// Get user's favorites
 function getUserFavorites() {
     $user = authenticateUser();
 
@@ -137,7 +118,6 @@ function getUserFavorites() {
 
         $favorites = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Format favorites data
         foreach ($favorites as &$favorite) {
             $favorite['rating'] = floatval($favorite['rating']);
             $favorite['date_added'] = date('Y-m-d H:i:s', strtotime($favorite['created_at']));
@@ -158,7 +138,6 @@ function getUserFavorites() {
     }
 }
 
-// Add venue to favorites
 function addToFavorites($input) {
     $user = authenticateUser();
 
@@ -181,7 +160,6 @@ function addToFavorites($input) {
     $db = $database->getConnection();
 
     try {
-        // Check if venue exists
         $venueQuery = "SELECT id FROM venues WHERE id = :venue_id AND is_active = 1";
         $venueStmt = $db->prepare($venueQuery);
         $venueStmt->bindParam(':venue_id', $venue_id);
@@ -191,7 +169,6 @@ function addToFavorites($input) {
             throw new Exception('Venue not found or inactive');
         }
 
-        // Check if already in favorites
         $checkQuery = "SELECT id FROM user_favorites WHERE user_id = :user_id AND venue_id = :venue_id";
         $checkStmt = $db->prepare($checkQuery);
         $checkStmt->bindParam(':user_id', $user['id']);
@@ -202,7 +179,6 @@ function addToFavorites($input) {
             throw new Exception('Venue already in favorites');
         }
 
-        // Add to favorites
         $insertQuery = "INSERT INTO user_favorites (user_id, venue_id) VALUES (:user_id, :venue_id)";
         $insertStmt = $db->prepare($insertQuery);
         $insertStmt->bindParam(':user_id', $user['id']);
@@ -230,7 +206,6 @@ function addToFavorites($input) {
     }
 }
 
-// Remove venue from favorites
 function removeFromFavorites($venue_id) {
     $user = authenticateUser();
 
@@ -279,7 +254,6 @@ function removeFromFavorites($venue_id) {
     }
 }
 
-// Check if venue is in user's favorites
 function isVenueFavorite($user_id, $venue_id) {
     $database = new Database();
     $db = $database->getConnection();

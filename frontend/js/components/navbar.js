@@ -3,7 +3,8 @@ const Navbar = {
     init() {
         this.bindEvents();
         this.updateAuthSection();
-        this.setActiveLink();
+        const currentRoute = Router.getRouteFromHash() || 'home';
+        this.setActiveLink(currentRoute);
         this.checkAuthOnLoad();
     },
 
@@ -127,6 +128,8 @@ const Navbar = {
         const isAuthenticated = Storage.Auth.isAuthenticated();
         const userData = Storage.User.getData();
 
+        this.updateProfileVisibility(isAuthenticated);
+
         if (isAuthenticated && userData.name) {
             // User is logged in
             authSection.innerHTML = `
@@ -158,6 +161,26 @@ const Navbar = {
 
             if (registerBtn) {
                 registerBtn.addEventListener('click', () => this.showAuthModal('register'));
+            }
+        }
+    },
+
+    updateProfileVisibility(isAuthenticated) {
+        const profileLink = document.querySelector('[data-page="profile"]');
+        if (profileLink) {
+            const profileLi = profileLink.closest('li');
+            if (profileLi) {
+                if (isAuthenticated) {
+                    profileLi.style.display = 'block';
+                } else {
+                    profileLi.style.display = 'none';
+
+                    // Если сейчас на странице профиля и пользователь не авторизован,
+                    // перенаправляем на главную
+                    if (Router.currentRoute === 'profile') {
+                        Router.navigateToRoute('home');
+                    }
+                }
             }
         }
     },
@@ -197,7 +220,7 @@ const Navbar = {
                     ${!isLogin ? `
                         <div class="form-group">
                             <label for="auth-age" class="form-label">Age Range</label>
-                            <select id="auth-age" name="age" class="form-select">
+                            <select id="auth-age" name="age_range" class="form-select">
                                 <option value="">Select age range</option>
                                 <option value="18-22">18-22</option>
                                 <option value="23-26">23-26</option>
@@ -284,6 +307,8 @@ const Navbar = {
         submitBtn.textContent = isLogin ? 'Signing in...' : 'Creating account...';
         submitBtn.disabled = true;
 
+        console.log('ИЩУ ВОЗРАСТ: ', form);
+
         try {
             // Prepare form data
             const formData = new FormData(form);
@@ -321,6 +346,9 @@ const Navbar = {
                 Storage.Auth.setToken(result.data.token);
                 Storage.User.setData(result.data.user);
 
+                // ДОБАВЛЕНО: Мигрируем гостевое избранное к пользователю
+                const migratedCount = Storage.Favorites.migrateGuestFavorites();
+
                 // Update UI
                 this.updateAuthSection();
                 this.closeModal();
@@ -329,11 +357,13 @@ const Navbar = {
                     await App.onUserLogin();
                 }
 
-                // Show success message
-                Helpers.UI.showToast(
-                    isLogin ? 'Welcome back! 🎉' : 'Account created successfully! 🎉',
-                    CONSTANTS.TOAST_TYPES.SUCCESS
-                );
+                // Show success message with migration info
+                let successMessage = isLogin ? 'Welcome back! 🎉' : 'Account created successfully! 🎉';
+                if (migratedCount > 0) {
+                    successMessage += ` Your ${migratedCount} favorite${migratedCount > 1 ? 's' : ''} ha${migratedCount > 1 ? 've' : 's'} been saved to your account.`;
+                }
+
+                Helpers.UI.showToast(successMessage, CONSTANTS.TOAST_TYPES.SUCCESS);
 
                 console.log('✅ Authentication successful:', result.data.user);
 
@@ -377,9 +407,25 @@ const Navbar = {
             // Continue with local logout even if API fails
         }
 
+        // ДОБАВЛЕНО: Очищаем персональное избранное при выходе
+        Storage.Favorites.clear();
+
         // Clear local auth data
         this.clearAuthData();
         this.navigateTo('home');
+
+        // ДОБАВЛЕНО: Обновляем UI избранного после logout
+        if (window.VenueCard) {
+            // Обновляем все кнопки избранного на странице
+            const favoriteButtons = document.querySelectorAll('.favorite-btn, .event-favorite-btn');
+            favoriteButtons.forEach(btn => {
+                btn.classList.remove('active');
+                const heartIcon = btn.querySelector('.heart-icon');
+                if (heartIcon) {
+                    heartIcon.textContent = '🤍';
+                }
+            });
+        }
 
         Helpers.UI.showToast('Logged out successfully! 👋', CONSTANTS.TOAST_TYPES.SUCCESS);
     },

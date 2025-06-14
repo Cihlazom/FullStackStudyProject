@@ -1,25 +1,12 @@
 <?php
-// Создайте файл backend/api/auth.php
-
-header("Access-Control-Allow-Origin: *");
-header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
-
-// Handle preflight requests
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     http_response_code(200);
     exit();
 }
 
-// Include database connection
-include_once 'database.php';
-
-// Get request method and input
 $method = $_SERVER['REQUEST_METHOD'];
 $input = json_decode(file_get_contents('php://input'), true);
 
-// Parse URL for endpoints
 $request = $_SERVER['REQUEST_URI'];
 $path = parse_url($request, PHP_URL_PATH);
 $path = str_replace('/FullStackStudyProject/backend/api', '', $path);
@@ -80,12 +67,10 @@ try {
     ]);
 }
 
-// User Registration
 function registerUser($input) {
     $database = new Database();
     $db = $database->getConnection();
 
-    // Validate input
     if (!isset($input['name'], $input['email'], $input['password'])) {
         throw new Exception('Missing required fields: name, email, password');
     }
@@ -96,17 +81,14 @@ function registerUser($input) {
     $age_range = $input['age_range'] ?? null;
     $interests = isset($input['interests']) ? json_encode($input['interests']) : null;
 
-    // Validate email format
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         throw new Exception('Invalid email format');
     }
 
-    // Validate password length
     if (strlen($password) < 6) {
         throw new Exception('Password must be at least 6 characters long');
     }
 
-    // Check if user already exists
     $checkQuery = "SELECT id FROM users WHERE email = :email";
     $checkStmt = $db->prepare($checkQuery);
     $checkStmt->bindParam(':email', $email);
@@ -116,10 +98,8 @@ function registerUser($input) {
         throw new Exception('User with this email already exists');
     }
 
-    // Hash password
     $password_hash = password_hash($password, PASSWORD_DEFAULT);
 
-    // Insert new user
     $insertQuery = "INSERT INTO users (name, email, password_hash, age_range, interests)
                     VALUES (:name, :email, :password_hash, :age_range, :interests)";
     $insertStmt = $db->prepare($insertQuery);
@@ -132,13 +112,11 @@ function registerUser($input) {
     if ($insertStmt->execute()) {
         $user_id = $db->lastInsertId();
 
-        // Create session token
         $token = generateSecureToken();
         $expires_at = date('Y-m-d H:i:s', strtotime('+30 days'));
 
         createUserSession($db, $user_id, $token, $expires_at);
 
-        // Get user data
         $userData = getUserData($db, $user_id);
 
         http_response_code(201);
@@ -156,12 +134,10 @@ function registerUser($input) {
     }
 }
 
-// User Login
 function loginUser($input) {
     $database = new Database();
     $db = $database->getConnection();
 
-    // Validate input
     if (!isset($input['email'], $input['password'])) {
         throw new Exception('Missing required fields: email, password');
     }
@@ -169,7 +145,6 @@ function loginUser($input) {
     $email = trim(strtolower($input['email']));
     $password = $input['password'];
 
-    // Get user from database
     $query = "SELECT id, name, email, password_hash, age_range, interests, is_active
               FROM users WHERE email = :email";
     $stmt = $db->prepare($query);
@@ -186,21 +161,17 @@ function loginUser($input) {
         throw new Exception('Account is deactivated');
     }
 
-    // Verify password
     if (!password_verify($password, $user['password_hash'])) {
         throw new Exception('Invalid email or password');
     }
 
-    // Create session token
     $token = generateSecureToken();
     $expires_at = date('Y-m-d H:i:s', strtotime('+30 days'));
 
     createUserSession($db, $user['id'], $token, $expires_at);
 
-    // Remove password hash from response
     unset($user['password_hash']);
 
-    // Parse interests JSON
     if ($user['interests']) {
         $user['interests'] = json_decode($user['interests'], true);
     }
@@ -216,7 +187,6 @@ function loginUser($input) {
     ]);
 }
 
-// User Logout
 function logoutUser($input) {
     $token = getAuthToken();
 
@@ -227,7 +197,6 @@ function logoutUser($input) {
     $database = new Database();
     $db = $database->getConnection();
 
-    // Delete session
     $query = "DELETE FROM user_sessions WHERE token = :token";
     $stmt = $db->prepare($query);
     $stmt->bindParam(':token', $token);
@@ -239,7 +208,6 @@ function logoutUser($input) {
     ]);
 }
 
-// Get User Profile
 function getUserProfile() {
     $user = authenticateUser();
 
@@ -253,7 +221,6 @@ function getUserProfile() {
     ]);
 }
 
-// Verify Token
 function verifyToken() {
     $user = authenticateUser();
 
@@ -273,7 +240,6 @@ function verifyToken() {
     ]);
 }
 
-// Helper Functions
 function generateSecureToken() {
     return bin2hex(random_bytes(32));
 }
@@ -316,7 +282,6 @@ function authenticateUser() {
     $database = new Database();
     $db = $database->getConnection();
 
-    // Get session and user data
     $query = "SELECT u.id, u.name, u.email, u.age_range, u.interests, u.avatar, s.expires_at
               FROM users u
               JOIN user_sessions s ON u.id = s.user_id
@@ -328,7 +293,6 @@ function authenticateUser() {
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($user) {
-        // Parse interests JSON
         if ($user['interests']) {
             $user['interests'] = json_decode($user['interests'], true);
         }
