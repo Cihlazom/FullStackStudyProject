@@ -23,7 +23,7 @@ const Router = {
             });
 
             const initialRoute = this.getRouteFromHash();
-            this.navigateToRoute(initialRoute, false); // false = не пушить в history
+            this.navigateToRoute(initialRoute, false);
 
             console.log('🛤️ Router initialized');
         },
@@ -59,7 +59,6 @@ const Router = {
             console.log(`🏃 Navigated to: ${route} (from: ${previousRoute})`);
         },
 
-        // Update navigation active states
         updateNavigation(activeRoute) {
             const navLinks = document.querySelectorAll('.nav-link');
             navLinks.forEach(link => {
@@ -70,7 +69,6 @@ const Router = {
             });
         },
 
-        // Render Home Page
         renderHomePage() {
             const mainContent = document.getElementById('main-content');
             if (!mainContent) return;
@@ -100,15 +98,6 @@ const Router = {
           <div class="results-header">
             <h2 id="results-title">Popular Places</h2>
             <div class="view-controls">
-              <button class="view-btn active" data-view="grid">
-                <span>Grid</span>
-              </button>
-              <button class="view-btn" data-view="list">
-                <span>List</span>
-              </button>
-              <button class="view-btn" data-view="map">
-                <span>Map</span>
-              </button>
             </div>
           </div>
           
@@ -122,10 +111,8 @@ const Router = {
       </section>
     `;
 
-            // Re-bind events and load data
             this.bindHomePageEvents();
 
-            // Re-initialize search component
             if (window.SearchFilters) {
                 SearchFilters.init();
             }
@@ -135,7 +122,6 @@ const Router = {
             }
         },
 
-        // Render Profile Page
         renderProfilePage() {
             const isAuthenticated = Storage?.Auth?.isAuthenticated() || false;
             const userData = Storage?.User?.getData() || {};
@@ -143,11 +129,9 @@ const Router = {
             const mainContent = document.getElementById('main-content');
             if (!mainContent) return;
 
-            // Включаем скролл обратно
             document.body.style.overflow = 'auto';
 
             if (!isAuthenticated) {
-                // Show login prompt
                 mainContent.innerHTML = `
         <section class="page-header">
           <div class="container">
@@ -170,7 +154,6 @@ const Router = {
         </section>
       `;
             } else {
-                // Show profile page
                 mainContent.innerHTML = `
         <section class="page-header">
           <div class="container">
@@ -204,7 +187,6 @@ const Router = {
                 <div class="profile-card">
                   <h3>Your Favorites</h3>
                   <p>Places you've saved: <strong>${Storage?.Favorites?.getCount() || 0}</strong></p>
-<!--                  <button class="btn btn-secondary">View Favorites</button>-->
                 </div>
               </div>
             </div>
@@ -216,7 +198,6 @@ const Router = {
             this.bindProfilePageEvents();
         },
 
-        // Render 404 Page
         render404Page() {
             const mainContent = document.getElementById('main-content');
             if (!mainContent) return;
@@ -260,9 +241,9 @@ const Router = {
           SearchFilters.init();
         }
 
-        if (window.App && App.setupViewControls) {
-          App.setupViewControls();
-        }
+        // if (window.App && App.setupViewControls) {
+        //   App.setupViewControls();
+        // }
       },
 
       bindProfilePageEvents() {

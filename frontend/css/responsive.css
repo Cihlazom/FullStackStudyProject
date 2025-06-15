@@ -1,6 +1,3 @@
-/* Responsive Styles for Barcelona Local Platform */
-
-/* Extra Large screens (1200px and up) */
 @media (min-width: 1200px) {
     .container {
         max-width: 1200px;
@@ -15,7 +12,6 @@
     }
 }
 
-/* Large screens (1024px to 1199px) */
 @media (max-width: 1199px) and (min-width: 1024px) {
     .results-container {
         grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -26,7 +22,6 @@
     }
 }
 
-/* Medium screens (768px to 1023px) - Tablets */
 @media (max-width: 1023px) and (min-width: 768px) {
     .container {
         padding: 0 var(--spacing-6);
@@ -63,7 +58,6 @@
     }
 }
 
-/* Small screens (480px to 767px) - Mobile Landscape */
 @media (max-width: 767px) and (min-width: 480px) {
     .container {
         padding: 0 var(--spacing-4);
@@ -127,7 +121,6 @@
         max-height: calc(100vh - var(--spacing-8));
     }
 
-    /* Navigation mobile */
     .nav-menu {
         padding: var(--spacing-6) var(--spacing-4);
         gap: var(--spacing-4);
@@ -148,13 +141,11 @@
     }
 }
 
-/* Extra Small screens (up to 479px) - Mobile Portrait */
 @media (max-width: 479px) {
     .container {
         padding: 0 var(--spacing-4);
     }
 
-    /* Header adjustments */
     .navbar .container {
         padding: 0 var(--spacing-4);
     }
@@ -163,7 +154,6 @@
         font-size: var(--font-size-xl);
     }
 
-    /* Hero section */
     .hero {
         padding: var(--spacing-12) 0 var(--spacing-10);
     }
@@ -183,7 +173,6 @@
         margin-bottom: var(--spacing-4);
     }
 
-    /* Results */
     .results-header {
         flex-direction: column;
         gap: var(--spacing-3);
@@ -209,7 +198,6 @@
         gap: var(--spacing-4);
     }
 
-    /* Venue cards */
     .venue-card {
         border-radius: var(--radius-md);
     }
@@ -252,7 +240,6 @@
         justify-content: center;
     }
 
-    /* Modal adjustments */
     .modal {
         padding: var(--spacing-2);
     }
@@ -315,7 +302,6 @@
         padding: var(--spacing-1) var(--spacing-2);
     }
 
-    /* Auth modal */
     .auth-modal {
         justify-self: center;
         padding: var(--spacing-4);
@@ -326,7 +312,6 @@
         font-size: var(--font-size-xl);
     }
 
-    /* Form elements */
     .form-input,
     .form-select {
         padding: var(--spacing-3);
@@ -343,7 +328,6 @@
         font-size: var(--font-size-sm);
     }
 
-    /* Navigation mobile */
     .nav-menu {
         padding: var(--spacing-6) var(--spacing-4);
         gap: var(--spacing-4);
@@ -370,7 +354,6 @@
         width: 100%;
     }
 
-    /* Toast notifications */
     .toast-container {
         top: var(--spacing-16);
         right: var(--spacing-2);
@@ -382,7 +365,6 @@
         width: 100%;
     }
 
-    /* Utility classes for mobile */
     .mobile-hidden {
         display: none;
     }
@@ -400,7 +382,6 @@
     }
 }
 
-/* Landscape orientation adjustments */
 @media (max-height: 500px) and (orientation: landscape) {
     .hero {
         padding: var(--spacing-8) 0 var(--spacing-6);
@@ -425,7 +406,6 @@
     }
 }
 
-/* Print styles */
 @media print {
     .navbar,
     .auth-section,
@@ -459,7 +439,6 @@
     }
 }
 
-/* High contrast mode */
 @media (prefers-contrast: high) {
     :root {
         --primary-color: #0000ff;
@@ -479,7 +458,6 @@
     }
 }
 
-/* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
     * {
         animation-duration: 0.01ms !important;

@@ -17,31 +17,25 @@ const App = {
         }
     },
 
-    // Initialize application
     init() {
         console.log('🚀 Initializing Barcelona Local Platform...');
 
-        // Check if all required dependencies are loaded
         if (!this.checkDependencies()) {
             console.error('❌ Missing dependencies. Please check console for details.');
             return;
         }
 
-        // Initialize components
         this.initializeComponents();
 
-        // Load initial data
         this.loadInitialData();
 
-        // Bind global events
         this.bindGlobalEvents();
 
-        this.setupViewControls();
+        // this.setupViewControls();
 
         console.log('✅ Application initialized successfully!');
     },
 
-    // Check if all dependencies are loaded
     checkDependencies() {
         const requiredGlobals = ['CONFIG', 'CONSTANTS', 'Helpers', 'Storage', 'Navbar', 'VenueCard', 'Router'];
         const missing = requiredGlobals.filter(name => typeof window[name] === 'undefined');
@@ -54,29 +48,19 @@ const App = {
         return true;
     },
 
-    // Initialize all components
     initializeComponents() {
-        // Initialize router first
         Router.init();
 
-        // Initialize navbar
         Navbar.init();
 
-        // Initialize auth utilities
         if (window.AuthUtils) {
             AuthUtils.init();
         }
-
-        // Initialize search component
-        // if (window.SearchFilters) {
-        //     SearchFilters.init();
-        // }
 
         if (window.SearchFilters) {
             console.log('🔄 Initializing SearchFilters...');
             console.log('SearchFilters has state:', !!SearchFilters.state);
 
-            // Проверяем, что это новая версия с state
             if (SearchFilters.state) {
                 SearchFilters.init();
                 console.log('✅ New SearchFilters initialized');
@@ -87,13 +71,11 @@ const App = {
             console.error('❌ SearchFilters not found!');
         }
 
-        // Set up modal close functionality
         this.setupModals();
 
         console.log('📦 Components initialized');
     },
 
-    // Load initial data
     async loadInitialData() {
         try {
             this.state.isLoading = true;
@@ -123,26 +105,21 @@ const App = {
     },
 
     async onUserLogin() {
-        // Вызывается после успешного логина
         if (window.VenueCard) {
             await VenueCard.loadUserFavorites();
-            // ДОБАВЛЕНО: Обновляем UI после загрузки избранного
             VenueCard.refreshFavoritesUI();
         }
         console.log('🔄 User data refreshed after login');
     },
 
-    // Load venues with current filters - UPDATED WITH SEARCH SUPPORT
     async loadVenues(append = false) {
         try {
             const params = new URLSearchParams();
 
-            // Add search query
             if (this.state.filters.query) {
                 params.append('search', this.state.filters.query);
             }
 
-            // Add filters to API request
             if (this.state.filters.type) {
                 params.append('type', this.state.filters.type);
             }
@@ -153,12 +130,10 @@ const App = {
                 params.append('priceRange', this.state.filters.priceRange);
             }
 
-            // Add pagination
             params.append('page', this.state.pagination.page);
             params.append('limit', this.state.pagination.limit);
 
-            // Make API request to your PHP backend
-            const response = await fetch(`${CONFIG.API.BASE_URL}/venues?${params}`);
+            const response = await fetch(`${CONFIG.API.BASE_URL}${CONFIG.API.ENDPOINTS.VENUES.PARAMS(params)}`);
 
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -170,32 +145,26 @@ const App = {
                 throw new Error(data.message || 'Failed to fetch venues');
             }
 
-            // Update state with real data
             if (append) {
                 this.state.venues = [...this.state.venues, ...data.data];
             } else {
                 this.state.venues = data.data;
             }
 
-            // Update pagination state
             this.state.pagination.hasMore = data.page * data.limit < data.total;
 
-            // Render venues
             if (append) {
                 VenueCard.append(data.data, 'results-container');
             } else {
                 VenueCard.render(this.state.venues, 'results-container');
             }
 
-            // Update results title
             this.updateResultsTitle(data.total);
 
-            // Show/hide load more button
             this.updateLoadMoreButton();
 
             console.log(`📍 Loaded ${data.data.length} venues from API`);
 
-            // Save to search history if there's a query
             if (this.state.filters.query && !append) {
                 Storage.SearchHistory.add(this.state.filters.query);
             }
@@ -203,13 +172,11 @@ const App = {
         } catch (error) {
             console.error('Error loading venues:', error);
 
-            // Show user-friendly error message
             Helpers.UI.showToast(
                 'Unable to load venues. Please check your connection.',
                 CONSTANTS.TOAST_TYPES.ERROR
             );
 
-            // Show empty state in UI
             const container = Helpers.DOM.get('results-container');
             if (container) {
                 container.innerHTML = `
@@ -224,19 +191,15 @@ const App = {
         }
     },
 
-    // Apply filters - UPDATED FOR SEARCH
     async applyFilters(filters) {
-        // Update state filters
         this.state.filters = { ...this.state.filters, ...filters };
         this.state.pagination.page = 1;
 
-        // Show loading
         Helpers.UI.showLoading();
 
         try {
             await this.loadVenues();
 
-            // Update search statistics
             this.updateSearchStats();
 
         } catch (error) {
@@ -247,7 +210,6 @@ const App = {
         }
     },
 
-    // Clear all filters - UPDATED
     async clearFilters() {
         this.state.filters = {
             query: '',
@@ -268,7 +230,6 @@ const App = {
         }
     },
 
-    // Update results title with search info - UPDATED
     updateResultsTitle(totalCount = null) {
         const titleElement = Helpers.DOM.get('results-title');
         if (!titleElement) return;
@@ -286,18 +247,15 @@ const App = {
         }
     },
 
-    // Update search statistics - NEW METHOD
     updateSearchStats() {
         const count = this.state.venues.length;
         const hasQuery = this.state.filters.query;
 
         if (hasQuery && count === 0) {
-            // Show search suggestions for empty results
             this.showSearchSuggestions();
         }
     },
 
-    // Show search suggestions - NEW METHOD
     showSearchSuggestions() {
         const container = Helpers.DOM.get('results-container');
         if (!container) return;
@@ -334,7 +292,6 @@ const App = {
         `;
     },
 
-    // Apply search suggestion - NEW METHOD
     applySuggestion(suggestion) {
         if (window.SearchFilters) {
             const searchInput = Helpers.DOM.get('search-query');
@@ -345,7 +302,6 @@ const App = {
         }
     },
 
-    // Rest of methods remain the same...
     updateLoadMoreButton() {
         const loadMoreSection = document.querySelector('.load-more');
         if (!loadMoreSection) return;
@@ -380,40 +336,40 @@ const App = {
         }
     },
 
-    setupViewControls() {
-        const viewButtons = document.querySelectorAll('.view-btn');
-
-        viewButtons.forEach(btn => {
-            btn.addEventListener('click', () => {
-                viewButtons.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-
-                const view = btn.dataset.view;
-                this.changeView(view);
-            });
-        });
-
-        const loadMoreBtn = Helpers.DOM.get('load-more-btn');
-        if (loadMoreBtn) {
-            loadMoreBtn.addEventListener('click', () => {
-                this.loadMoreVenues();
-            });
-        }
-    },
-
-    changeView(viewType) {
-        const container = Helpers.DOM.get('results-container');
-        if (!container) return;
-
-        container.classList.remove('grid-view', 'list-view', 'map-view');
-        container.classList.add(`${viewType}-view`);
-
-        if (viewType === 'list') {
-            Helpers.UI.showToast('List view - Coming soon!', CONSTANTS.TOAST_TYPES.INFO);
-        } else if (viewType === 'map') {
-            Helpers.UI.showToast('Map view - Coming soon!', CONSTANTS.TOAST_TYPES.INFO);
-        }
-    },
+    // setupViewControls() {
+    //     const viewButtons = document.querySelectorAll('.view-btn');
+    //
+    //     viewButtons.forEach(btn => {
+    //         btn.addEventListener('click', () => {
+    //             viewButtons.forEach(b => b.classList.remove('active'));
+    //             btn.classList.add('active');
+    //
+    //             const view = btn.dataset.view;
+    //             this.changeView(view);
+    //         });
+    //     });
+    //
+    //     const loadMoreBtn = Helpers.DOM.get('load-more-btn');
+    //     if (loadMoreBtn) {
+    //         loadMoreBtn.addEventListener('click', () => {
+    //             this.loadMoreVenues();
+    //         });
+    //     }
+    // },
+    //
+    // changeView(viewType) {
+    //     const container = Helpers.DOM.get('results-container');
+    //     if (!container) return;
+    //
+    //     container.classList.remove('grid-view', 'list-view', 'map-view');
+    //     container.classList.add(`${viewType}-view`);
+    //     //
+    //     // if (viewType === 'list') {
+    //     //     Helpers.UI.showToast('List view - Coming soon!', CONSTANTS.TOAST_TYPES.INFO);
+    //     // } else if (viewType === 'map') {
+    //     //     Helpers.UI.showToast('Map view - Coming soon!', CONSTANTS.TOAST_TYPES.INFO);
+    //     // }
+    // },
 
     async loadMoreVenues() {
         if (!this.state.pagination.hasMore || this.state.isLoading) {
@@ -474,14 +430,6 @@ const App = {
     },
 
     utils: {
-        showError(message) {
-            Helpers.UI.showToast(message, CONSTANTS.TOAST_TYPES.ERROR);
-        },
-
-        showSuccess(message) {
-            Helpers.UI.showToast(message, CONSTANTS.TOAST_TYPES.SUCCESS);
-        },
-
         logAppInfo() {
             console.log('%c🏛️ Barcelona Local Platform', 'font-size: 20px; color: #667eea;');
             console.log('Version:', CONFIG.APP.VERSION);

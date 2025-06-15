@@ -1,6 +1,4 @@
-// Updated Venue Card Component for real API data
 const VenueCard = {
-    // Create a venue card HTML
     create(venue) {
         const isFavorite = this.isFavorite(venue.id);
         const priceSymbol = this.getPriceSymbol(venue.price_range || venue.priceRange);
@@ -57,12 +55,10 @@ const VenueCard = {
         `;
     },
 
-    // Create multiple venue cards
     createMultiple(venues) {
         return venues.map(venue => this.create(venue)).join('');
     },
 
-    // Get price symbol based on price range
     getPriceSymbol(priceRange) {
         const priceMap = {
             'budget': '€',
@@ -73,7 +69,6 @@ const VenueCard = {
         return priceMap[priceRange] || '€';
     },
 
-    // Create star rating HTML
     createStars(rating) {
         const numRating = parseFloat(rating) || 0;
         const fullStars = Math.floor(numRating);
@@ -82,17 +77,14 @@ const VenueCard = {
 
         let starsHTML = '';
 
-        // Full stars
         for (let i = 0; i < fullStars; i++) {
             starsHTML += '<span class="star full">★</span>';
         }
 
-        // Half star
         if (hasHalfStar) {
             starsHTML += '<span class="star half">★</span>';
         }
 
-        // Empty stars
         for (let i = 0; i < emptyStars; i++) {
             starsHTML += '<span class="star empty">☆</span>';
         }
@@ -100,7 +92,6 @@ const VenueCard = {
         return starsHTML;
     },
 
-    // Render venues in container
     render(venues, containerId) {
         const container = Helpers.DOM.get(containerId);
         if (!container) {
@@ -122,11 +113,9 @@ const VenueCard = {
         container.innerHTML = this.createMultiple(venues);
         this.bindEvents(container);
 
-        // Загружаем favorites пользователя после рендера
         this.loadUserFavorites();
     },
 
-    // Append venues to existing container
     append(venues, containerId) {
         const container = Helpers.DOM.get(containerId);
         if (!container) return;
@@ -136,9 +125,7 @@ const VenueCard = {
         this.bindEvents(container);
     },
 
-    // Bind event listeners to venue cards
     bindEvents(container) {
-        // View details buttons
         const detailButtons = container.querySelectorAll('.view-details-btn');
         detailButtons.forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -148,7 +135,6 @@ const VenueCard = {
             });
         });
 
-        // Favorite buttons
         const favoriteButtons = container.querySelectorAll('.favorite-btn');
         favoriteButtons.forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -158,7 +144,6 @@ const VenueCard = {
             });
         });
 
-        // Share buttons
         const shareButtons = container.querySelectorAll('.share-btn');
         shareButtons.forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -168,7 +153,6 @@ const VenueCard = {
             });
         });
 
-        // Card click (show details)
         const venueCards = container.querySelectorAll('.venue-card');
         venueCards.forEach(card => {
             card.addEventListener('click', () => {
@@ -178,12 +162,10 @@ const VenueCard = {
         });
     },
 
-    // Show venue details modal - NOW USING REAL API
     async showVenueDetails(venueId) {
         try {
             Helpers.UI.showLoading();
 
-            // Fetch venue details from real API
             const response = await fetch(`${CONFIG.API.BASE_URL}${CONFIG.API.ENDPOINTS.VENUES.DETAILS(venueId)}`);
 
             if (!response.ok) {
@@ -199,7 +181,6 @@ const VenueCard = {
                 throw new Error(data.message || 'Failed to fetch venue details');
             }
 
-            // ДОБАВЛЕНО: Обновляем favorites перед рендером модала
             if (Storage.Auth.isAuthenticated()) {
                 await this.loadUserFavorites();
             }
@@ -214,20 +195,17 @@ const VenueCard = {
         }
     },
 
-    // Render venue details in modal
     renderVenueModal(venue) {
         const modal = Helpers.DOM.get('venue-modal');
         const modalBody = Helpers.DOM.get('modal-body');
 
         if (!modal || !modalBody) return;
 
-        // ПРАВИЛЬНАЯ проверка избранного
         const isFavorite = this.isFavorite(venue.id);
         console.log('🔍 Modal venue favorite status:', venue.id, isFavorite);
 
         const priceSymbol = this.getPriceSymbol(venue.price_range || venue.priceRange);
 
-        // Parse features and hours from JSON if they're strings
         let features = venue.features;
         let hours = venue.hours;
 
@@ -348,17 +326,13 @@ const VenueCard = {
         </div>
     `;
 
-        // Show modal
         modal.style.display = 'flex';
 
-        // Bind modal events
         const modalFavoriteBtn = Helpers.DOM.get('modal-favorite-btn');
         const modalShareBtn = Helpers.DOM.get('modal-share-btn');
 
         if (modalFavoriteBtn) {
-            // ИСПРАВЛЕННЫЙ обработчик - учитываем текущее состояние
             modalFavoriteBtn.addEventListener('click', () => {
-                // Создаем временную кнопку для совместимости с toggleFavorite
                 const tempButton = {
                     classList: {
                         contains: (className) => className === 'active' ? isFavorite : false,
@@ -382,7 +356,6 @@ const VenueCard = {
                     title: modalFavoriteBtn.title
                 };
 
-                // Передаем в toggleFavorite с правильным состоянием
                 this.toggleFavoriteModal(venue.id, modalFavoriteBtn);
             });
         }
@@ -395,7 +368,6 @@ const VenueCard = {
     },
 
     async toggleFavoriteModal(venueId, button) {
-        // Проверяем авторизацию
         if (!Storage.Auth.isAuthenticated()) {
             Helpers.UI.showToast('Please log in to add favorites', CONSTANTS.TOAST_TYPES.WARNING);
             if (window.Navbar) {
@@ -404,13 +376,11 @@ const VenueCard = {
             return;
         }
 
-        // Получаем текущее состояние из data-attribute
         const isFavorite = button.dataset.isFavorite === 'true';
         const token = Storage.Auth.getToken();
 
         console.log('🔄 Toggling favorite in modal:', venueId, 'Current state:', isFavorite);
 
-        // Показываем loading состояние
         const originalContent = button.innerHTML;
         button.innerHTML = isFavorite ? '⏳ Removing...' : '⏳ Adding...';
         button.disabled = true;
@@ -419,8 +389,7 @@ const VenueCard = {
             let response;
 
             if (isFavorite) {
-                // Удаляем из избранного
-                response = await fetch(`${CONFIG.API.BASE_URL}/favorites/${venueId}`, {
+                response = await fetch(`${CONFIG.API.BASE_URL}${CONFIG.API.ENDPOINTS.FAVORITES.DELETE(venueId)}`, {
                     method: 'DELETE',
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -428,8 +397,7 @@ const VenueCard = {
                     }
                 });
             } else {
-                // Добавляем в избранное
-                response = await fetch(`${CONFIG.API.BASE_URL}/favorites`, {
+                response = await fetch(`${CONFIG.API.BASE_URL}${CONFIG.API.ENDPOINTS.FAVORITES.ADD}`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -442,7 +410,6 @@ const VenueCard = {
             const result = await response.json();
 
             if (result.success) {
-                // Обновляем состояние кнопки
                 const newIsFavorite = !isFavorite;
                 button.dataset.isFavorite = newIsFavorite.toString();
 
@@ -454,7 +421,6 @@ const VenueCard = {
                     button.innerHTML = '🤍 Add to Favorites';
                 }
 
-                // Обновляем все остальные кнопки для этого venue
                 const allFavoriteButtons = document.querySelectorAll(`[data-venue-id="${venueId}"]`);
                 allFavoriteButtons.forEach(btn => {
                     if (btn !== button && (btn.classList.contains('favorite-btn') || btn.classList.contains('event-favorite-btn'))) {
@@ -462,7 +428,6 @@ const VenueCard = {
                     }
                 });
 
-                // Обновляем local storage
                 if (newIsFavorite) {
                     Storage.Favorites.add(venueId, { name: 'Venue' });
                 } else {
@@ -473,7 +438,6 @@ const VenueCard = {
                     FavoriteSync.notifyFavoriteChanged(venueId, newIsFavorite);
                 }
 
-                // Показываем уведомление
                 const message = newIsFavorite ?
                     CONSTANTS.SUCCESS_MESSAGES.FAVORITE_ADDED :
                     CONSTANTS.SUCCESS_MESSAGES.FAVORITE_REMOVED;
@@ -488,10 +452,8 @@ const VenueCard = {
         } catch (error) {
             console.error('❌ Modal favorite toggle failed:', error);
 
-            // Восстанавливаем оригинальное состояние
             button.innerHTML = originalContent;
 
-            // Показываем ошибку
             let errorMessage = 'Failed to update favorites';
             if (error.message.includes('Authentication required')) {
                 errorMessage = 'Please log in to manage favorites';
@@ -505,9 +467,7 @@ const VenueCard = {
         }
     },
 
-    // Toggle favorite status
     async toggleFavorite(venueId, button) {
-        // Проверяем авторизацию
         if (!Storage.Auth.isAuthenticated()) {
             Helpers.UI.showToast('Please log in to add favorites', CONSTANTS.TOAST_TYPES.WARNING);
             if (window.Navbar) {
@@ -519,7 +479,6 @@ const VenueCard = {
         const isFavorite = button.classList.contains('active');
         const token = Storage.Auth.getToken();
 
-        // Показываем loading состояние
         const originalContent = button.innerHTML;
         button.innerHTML = '<span class="heart-icon">⏳</span>';
         button.disabled = true;
@@ -528,8 +487,7 @@ const VenueCard = {
             let response;
 
             if (isFavorite) {
-                // Удаляем из избранного
-                response = await fetch(`${CONFIG.API.BASE_URL}/favorites/${venueId}`, {
+                response = await fetch(`${CONFIG.API.BASE_URL}${CONFIG.API.ENDPOINTS.FAVORITES.DELETE(venueId)}`, {
                     method: 'DELETE',
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -537,8 +495,7 @@ const VenueCard = {
                     }
                 });
             } else {
-                // Добавляем в избранное
-                response = await fetch(`${CONFIG.API.BASE_URL}/favorites`, {
+                response = await fetch(`${CONFIG.API.BASE_URL}${CONFIG.API.ENDPOINTS.FAVORITES.ADD}`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -553,18 +510,15 @@ const VenueCard = {
             if (result.success) {
                 const newIsFavorite = !isFavorite;
 
-                // Обновляем local storage
                 if (newIsFavorite) {
                     Storage.Favorites.add(venueId, { name: 'Venue' });
                 } else {
                     Storage.Favorites.remove(venueId);
                 }
 
-                // НОВОЕ: Уведомляем систему синхронизации
                 if (window.FavoriteSync) {
                     FavoriteSync.notifyFavoriteChanged(venueId, newIsFavorite);
                 } else {
-                    // Fallback: обновляем все кнопки вручную
                     const allFavoriteButtons = document.querySelectorAll(`[data-venue-id="${venueId}"]`);
                     allFavoriteButtons.forEach(btn => {
                         if (btn.classList.contains('favorite-btn') || btn.classList.contains('event-favorite-btn')) {
@@ -573,7 +527,6 @@ const VenueCard = {
                     });
                 }
 
-                // Показываем уведомление
                 const message = newIsFavorite ?
                     CONSTANTS.SUCCESS_MESSAGES.FAVORITE_ADDED :
                     CONSTANTS.SUCCESS_MESSAGES.FAVORITE_REMOVED;
@@ -606,30 +559,6 @@ const VenueCard = {
         }
     },
 
-    updateOpenModalFavoriteState(venueId) {
-        const modal = Helpers.DOM.get('venue-modal');
-        const modalFavoriteBtn = document.getElementById('modal-favorite-btn');
-
-        // Проверяем, открыт ли модал для этого venue
-        if (modal && modal.style.display === 'flex' &&
-            modalFavoriteBtn && modalFavoriteBtn.dataset.venueId === venueId) {
-
-            const isFavorite = this.isFavorite(venueId);
-            modalFavoriteBtn.dataset.isFavorite = isFavorite.toString();
-
-            if (isFavorite) {
-                modalFavoriteBtn.classList.add('btn-error');
-                modalFavoriteBtn.innerHTML = '❤️ Remove from Favorites';
-            } else {
-                modalFavoriteBtn.classList.remove('btn-error');
-                modalFavoriteBtn.innerHTML = '🤍 Add to Favorites';
-            }
-
-            console.log('🔄 Updated modal favorite state for venue:', venueId, isFavorite);
-        }
-    },
-
-    // Update favorite button appearance
     updateFavoriteButton(button, isFavorite) {
         const heartIcon = button.querySelector('.heart-icon');
 
@@ -659,7 +588,7 @@ const VenueCard = {
         const token = Storage.Auth.getToken();
 
         try {
-            const response = await fetch(`${CONFIG.API.BASE_URL}/favorites`, {
+            const response = await fetch(`${CONFIG.API.BASE_URL}${CONFIG.API.ENDPOINTS.FAVORITES.ADD}`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -671,10 +600,8 @@ const VenueCard = {
                 const result = await response.json();
 
                 if (result.success && result.data) {
-                    // ИЗМЕНЕНО: Очищаем текущее избранное пользователя перед загрузкой с сервера
                     Storage.Favorites.clear();
 
-                    // Загружаем избранное с сервера
                     result.data.forEach(favorite => {
                         Storage.Favorites.add(favorite.venue_id, {
                             name: favorite.name,
@@ -683,7 +610,6 @@ const VenueCard = {
                         });
                     });
 
-                    // Обновляем UI для всех карточек
                     result.data.forEach(favorite => {
                         const buttons = document.querySelectorAll(`[data-venue-id="${favorite.venue_id}"]`);
                         buttons.forEach(btn => {
@@ -694,6 +620,7 @@ const VenueCard = {
                     });
 
                     console.log('✅ User favorites loaded from server:', result.data.length, 'items');
+
                 }
             }
         } catch (error) {
@@ -703,11 +630,9 @@ const VenueCard = {
     },
 
     refreshFavoritesUI() {
-        // Получаем текущее избранное пользователя
         const currentFavorites = Storage.Favorites.get();
         const favoriteIds = currentFavorites.map(fav => fav.venueId);
 
-        // Обновляем все кнопки избранного на странице
         const allFavoriteButtons = document.querySelectorAll('.favorite-btn, .event-favorite-btn');
         allFavoriteButtons.forEach(btn => {
             const venueId = btn.dataset.venueId;
@@ -717,7 +642,6 @@ const VenueCard = {
             }
         });
 
-        // Обновляем модальные окна, если открыты
         const modalFavoriteBtn = document.getElementById('modal-favorite-btn');
         if (modalFavoriteBtn) {
             const venueId = modalFavoriteBtn.dataset.venueId;
@@ -739,11 +663,9 @@ const VenueCard = {
     },
 
     isFavorite(venueId) {
-        // Проверяем в local storage (синхронизируется с сервером)
         return Storage.Favorites.isFavorite(venueId);
     },
 
-    // Share venue
     shareVenue(venueId) {
         if (navigator.share) {
             navigator.share({
@@ -752,7 +674,6 @@ const VenueCard = {
                 url: `${window.location.origin}#venue=${venueId}`
             });
         } else {
-            // Fallback: copy to clipboard
             const url = `${window.location.origin}#venue=${venueId}`;
             navigator.clipboard.writeText(url).then(() => {
                 Helpers.UI.showToast('Link copied to clipboard!', CONSTANTS.TOAST_TYPES.SUCCESS);
@@ -761,5 +682,4 @@ const VenueCard = {
     }
 };
 
-// Make VenueCard globally available
 window.VenueCard = VenueCard;

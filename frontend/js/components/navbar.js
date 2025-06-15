@@ -1,5 +1,4 @@
 const Navbar = {
-    // Initialize navbar
     init() {
         this.bindEvents();
         this.updateAuthSection();
@@ -8,12 +7,11 @@ const Navbar = {
         this.checkAuthOnLoad();
     },
 
-    // Check authentication status on page load
     async checkAuthOnLoad() {
         const token = Storage.Auth.getToken();
         if (token) {
             try {
-                const response = await fetch(`${CONFIG.API.BASE_URL}/auth/verify`, {
+                const response = await fetch(`${CONFIG.API.BASE_URL}${CONFIG.API.ENDPOINTS.AUTH.VERIFY}`, {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -29,30 +27,24 @@ const Navbar = {
                         this.updateAuthSection();
                         console.log('✅ User authenticated on load');
                     } else {
-                        // Token is invalid, clear auth data
                         this.clearAuthData();
                     }
                 } else {
-                    // Server error, clear auth data
                     this.clearAuthData();
                 }
             } catch (error) {
                 console.error('Auth verification failed:', error);
-                // Keep existing auth data on network error
             }
         }
     },
 
-    // Clear authentication data
     clearAuthData() {
         Storage.Auth.removeToken();
         Storage.User.removeData();
         this.updateAuthSection();
     },
 
-    // Bind event listeners
     bindEvents() {
-        // Mobile menu toggle
         const navToggle = Helpers.DOM.get('nav-toggle');
         const navMenu = Helpers.DOM.get('nav-menu');
 
@@ -65,7 +57,6 @@ const Navbar = {
             console.log('🛤️ Navbar initialized');
         }
 
-        // Navigation links
         const navLinks = Helpers.DOM.getAll('.nav-link');
         navLinks.forEach(link => {
             link.addEventListener('click', (e) => {
@@ -75,7 +66,6 @@ const Navbar = {
             });
         });
 
-        // Close mobile menu when clicking outside
         document.addEventListener('click', (e) => {
             if (navMenu && navToggle &&
                 !navMenu.contains(e.target) &&
@@ -86,12 +76,9 @@ const Navbar = {
         });
     },
 
-    // Navigate to different pages
     navigateTo(page) {
-        // Update active link FIRST
         this.setActiveLink(page);
 
-        // Close mobile menu
         const navMenu = Helpers.DOM.get('nav-menu');
         const navToggle = Helpers.DOM.get('nav-toggle');
         if (navMenu && navToggle) {
@@ -99,17 +86,14 @@ const Navbar = {
             navToggle.classList.remove('active');
         }
 
-        // Check authentication for profile
         if (page === 'profile' && !Storage.Auth.isAuthenticated()) {
             this.showAuthModal('login');
             return;
         }
 
-        // Use Router directly
         Router.navigateToRoute(page);
     },
 
-    // Set active navigation link
     setActiveLink(activePage = 'home') {
         const navLinks = Helpers.DOM.getAll('.nav-link');
         navLinks.forEach(link => {
@@ -120,7 +104,6 @@ const Navbar = {
         });
     },
 
-    // Update auth section based on login status
     updateAuthSection() {
         const authSection = Helpers.DOM.get('auth-section');
         if (!authSection) return;
@@ -131,7 +114,6 @@ const Navbar = {
         this.updateProfileVisibility(isAuthenticated);
 
         if (isAuthenticated && userData.name) {
-            // User is logged in
             authSection.innerHTML = `
                 <div class="user-menu">
                     <span class="user-name">Hi, ${userData.name}</span>
@@ -139,19 +121,16 @@ const Navbar = {
                 </div>
             `;
 
-            // Re-bind logout event
             const logoutBtn = Helpers.DOM.get('logout-btn');
             if (logoutBtn) {
                 logoutBtn.addEventListener('click', () => this.logout());
             }
         } else {
-            // User is not logged in
             authSection.innerHTML = `
                 <button class="btn btn-ghost" id="login-btn">Login</button>
                 <button class="btn btn-primary" id="register-btn">Sign Up</button>
             `;
 
-            // Re-bind auth events
             const loginBtn = Helpers.DOM.get('login-btn');
             const registerBtn = Helpers.DOM.get('register-btn');
 
@@ -175,8 +154,6 @@ const Navbar = {
                 } else {
                     profileLi.style.display = 'none';
 
-                    // Если сейчас на странице профиля и пользователь не авторизован,
-                    // перенаправляем на главную
                     if (Router.currentRoute === 'profile') {
                         Router.navigateToRoute('home');
                     }
@@ -185,9 +162,8 @@ const Navbar = {
         }
     },
 
-    // Show authentication modal
     showAuthModal(type = 'login') {
-        const modal = Helpers.DOM.get('venue-modal'); // Reuse existing modal
+        const modal = Helpers.DOM.get('venue-modal');
         const modalBody = Helpers.DOM.get('modal-body');
 
         if (!modal || !modalBody) return;
@@ -195,90 +171,97 @@ const Navbar = {
         const isLogin = type === 'login';
 
         modalBody.innerHTML = `
-            <div class="auth-modal">
-                <h2>${isLogin ? 'Welcome Back' : 'Join BarcelonaLocal'}</h2>
-                <p>${isLogin ? 'Sign in to your account' : 'Create your account to get started'}</p>
-                
-                <form id="auth-form" class="auth-form">
-                    ${!isLogin ? `
-                        <div class="form-group">
-                            <label for="auth-name" class="form-label">Full Name</label>
-                            <input type="text" id="auth-name" name="name" class="form-input" required>
-                        </div>
-                    ` : ''}
-                    
-                    <div class="form-group">
-                        <label for="auth-email" class="form-label">Email</label>
-                        <input type="email" id="auth-email" name="email" class="form-input" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="auth-password" class="form-label">Password</label>
-                        <input type="password" id="auth-password" name="password" class="form-input" required minlength="6">
-                    </div>
-                    
-                    ${!isLogin ? `
-                        <div class="form-group">
-                            <label for="auth-age" class="form-label">Age Range</label>
-                            <select id="auth-age" name="age_range" class="form-select">
-                                <option value="">Select age range</option>
-                                <option value="18-22">18-22</option>
-                                <option value="23-26">23-26</option>
-                                <option value="27-30">27-30</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">Interests</label>
-                            <div class="interests-grid">
-                                <label class="interest-checkbox">
-                                    <input type="checkbox" name="interests" value="nightlife">
-                                    <span>🌙 Nightlife</span>
-                                </label>
-                                <label class="interest-checkbox">
-                                    <input type="checkbox" name="interests" value="food">
-                                    <span>🍽️ Food</span>
-                                </label>
-                                <label class="interest-checkbox">
-                                    <input type="checkbox" name="interests" value="culture">
-                                    <span>🎭 Culture</span>
-                                </label>
-                                <label class="interest-checkbox">
-                                    <input type="checkbox" name="interests" value="sports">
-                                    <span>⚽ Sports</span>
-                                </label>
-                                <label class="interest-checkbox">
-                                    <input type="checkbox" name="interests" value="music">
-                                    <span>🎵 Music</span>
-                                </label>
-                                <label class="interest-checkbox">
-                                    <input type="checkbox" name="interests" value="networking">
-                                    <span>🤝 Networking</span>
-                                </label>
-                            </div>
-                        </div>
-                    ` : ''}
-                    
-                    <button type="submit" class="btn btn-primary w-full" id="auth-submit-btn">
-                        ${isLogin ? 'Sign In' : 'Create Account'}
-                    </button>
-                </form>
-                
-                <div class="auth-switch">
-                    <p>
-                        ${isLogin ? "Don't have an account?" : "Already have an account?"}
-                        <a href="#" id="auth-switch-link">
-                            ${isLogin ? 'Sign up' : 'Sign in'}
-                        </a>
-                    </p>
+    <div class="auth-modal">
+        <h2>${isLogin ? 'Welcome Back' : 'Join BarcelonaLocal'}</h2>
+        <p>${isLogin ? 'Sign in to your account' : 'Create your account to get started'}</p>
+        
+        <form id="auth-form" class="auth-form">
+            ${!isLogin ? `
+                <div class="form-group">
+                    <label for="auth-name" class="form-label">Full Name</label>
+                    <input type="text" id="auth-name" name="name" class="form-input" required>
                 </div>
+            ` : ''}
+            
+            <div class="form-group">
+                <label for="auth-email" class="form-label">Email</label>
+                <input type="email" id="auth-email" name="email" class="form-input" required>
             </div>
-        `;
+            
+            <div class="form-group">
+                <label for="auth-password" class="form-label">Password</label>
+                <input type="password" id="auth-password" name="password" class="form-input" required minlength="6">
+                ${!isLogin ? `
+                    <div class="password-strength" id="password-strength">
+                        <div class="strength-bar">
+                            <div class="strength-fill"></div>
+                        </div>
+                        <div class="strength-text">Enter password to see strength</div>
+                        <div class="strength-feedback">Enter password to see strength</div>
+                    </div>
+                ` : ''}
+            </div>
+            
+            ${!isLogin ? `
+                <div class="form-group">
+                    <label for="auth-age" class="form-label">Age Range</label>
+                    <select id="auth-age" name="age_range" class="form-select">
+                        <option value="">Select age range</option>
+                        <option value="18-22">18-22</option>
+                        <option value="23-26">23-26</option>
+                        <option value="27-30">27-30</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Interests</label>
+                    <div class="interests-grid">
+                        <label class="interest-checkbox">
+                            <input type="checkbox" name="interests" value="nightlife">
+                            <span>🌙 Nightlife</span>
+                        </label>
+                        <label class="interest-checkbox">
+                            <input type="checkbox" name="interests" value="food">
+                            <span>🍽️ Food</span>
+                        </label>
+                        <label class="interest-checkbox">
+                            <input type="checkbox" name="interests" value="culture">
+                            <span>🎭 Culture</span>
+                        </label>
+                        <label class="interest-checkbox">
+                            <input type="checkbox" name="interests" value="sports">
+                            <span>⚽ Sports</span>
+                        </label>
+                        <label class="interest-checkbox">
+                            <input type="checkbox" name="interests" value="music">
+                            <span>🎵 Music</span>
+                        </label>
+                        <label class="interest-checkbox">
+                            <input type="checkbox" name="interests" value="networking">
+                            <span>🤝 Networking</span>
+                        </label>
+                    </div>
+                </div>
+            ` : ''}
+            
+            <button type="submit" class="btn btn-primary w-full" id="auth-submit-btn">
+                ${isLogin ? 'Sign In' : 'Create Account'}
+            </button>
+        </form>
+        
+        <div class="auth-switch">
+            <p>
+                ${isLogin ? "Don't have an account?" : "Already have an account?"}
+                <a href="#" id="auth-switch-link">
+                    ${isLogin ? 'Sign up' : 'Sign in'}
+                </a>
+            </p>
+        </div>
+    </div>
+`;
 
-        // Show modal
         modal.style.display = 'flex';
 
-        // Bind form events
         const authForm = Helpers.DOM.get('auth-form');
         const switchLink = Helpers.DOM.get('auth-switch-link');
 
@@ -295,42 +278,70 @@ const Navbar = {
                 this.showAuthModal(isLogin ? 'register' : 'login');
             });
         }
+
+        if (!isLogin) {
+            setTimeout(() => {
+                const passwordInput = Helpers.DOM.get('auth-password');
+                if (passwordInput) {
+                    const passwordGroup = passwordInput.closest('.form-group');
+                    if (passwordGroup) {
+                        const strengthHTML = `
+                <div class="password-strength" id="password-strength">
+                    <div class="strength-bar">
+                        <div class="strength-fill"></div>
+                    </div>
+                    <div class="strength-text">Enter password to see strength</div>
+                </div>
+            `;
+                        passwordGroup.insertAdjacentHTML('beforeend', strengthHTML);
+
+                        const strengthElement = Helpers.DOM.get('password-strength');
+                        if (window.AuthUtils && strengthElement) {
+                            AuthUtils.showPasswordStrength(passwordInput, strengthElement);
+                        }
+                    }
+                }
+            }, 50)
+        }
     },
 
-    // Handle authentication - REAL API CALLS
     async handleAuth(type, form) {
         const isLogin = type === 'login';
         const submitBtn = Helpers.DOM.get('auth-submit-btn');
         const originalText = submitBtn.textContent;
 
-        // Show loading state
+        this.clearFormErrors(form);
+
+        const formData = new FormData(form);
+        const data = {
+            name: formData.get('name'),
+            email: formData.get('email'),
+            password: formData.get('password'),
+            age_range: formData.get('age_range')
+        };
+
+        const interests = [];
+        const interestCheckboxes = form.querySelectorAll('input[name="interests"]:checked');
+        interestCheckboxes.forEach(checkbox => {
+            interests.push(checkbox.value);
+        });
+        data.interests = interests;
+
+        if (window.AuthUtils) {
+            let validation = isLogin ? AuthUtils.validateAuthorizationForm(data) : AuthUtils.validateRegistrationForm(data);
+
+            if (!validation.isValid) {
+                this.showFormErrors(form, validation.errors);
+                return;
+            }
+        }
+
         submitBtn.textContent = isLogin ? 'Signing in...' : 'Creating account...';
         submitBtn.disabled = true;
-
-        console.log('ИЩУ ВОЗРАСТ: ', form);
+        submitBtn.classList.add('loading');
 
         try {
-            // Prepare form data
-            const formData = new FormData(form);
-            const data = {
-                name: formData.get('name'),
-                email: formData.get('email'),
-                password: formData.get('password'),
-                age_range: formData.get('age_range')
-            };
-
-            // Get interests for registration
-            if (!isLogin) {
-                const interests = [];
-                const interestCheckboxes = form.querySelectorAll('input[name="interests"]:checked');
-                interestCheckboxes.forEach(checkbox => {
-                    interests.push(checkbox.value);
-                });
-                data.interests = interests;
-            }
-
-            // Make API call
-            const endpoint = isLogin ? '/auth/login' : '/auth/register';
+            const endpoint = isLogin ? CONFIG.API.ENDPOINTS.AUTH.LOGIN : CONFIG.API.ENDPOINTS.AUTH.REGISTER;
             const response = await fetch(`${CONFIG.API.BASE_URL}${endpoint}`, {
                 method: 'POST',
                 headers: {
@@ -342,28 +353,15 @@ const Navbar = {
             const result = await response.json();
 
             if (result.success) {
-                // Save auth data
                 Storage.Auth.setToken(result.data.token);
                 Storage.User.setData(result.data.user);
 
-                // ДОБАВЛЕНО: Мигрируем гостевое избранное к пользователю
-                const migratedCount = Storage.Favorites.migrateGuestFavorites();
-
-                // Update UI
                 this.updateAuthSection();
                 this.closeModal();
 
                 if (window.App && App.onUserLogin) {
                     await App.onUserLogin();
                 }
-
-                // Show success message with migration info
-                let successMessage = isLogin ? 'Welcome back! 🎉' : 'Account created successfully! 🎉';
-                if (migratedCount > 0) {
-                    successMessage += ` Your ${migratedCount} favorite${migratedCount > 1 ? 's' : ''} ha${migratedCount > 1 ? 've' : 's'} been saved to your account.`;
-                }
-
-                Helpers.UI.showToast(successMessage, CONSTANTS.TOAST_TYPES.SUCCESS);
 
                 console.log('✅ Authentication successful:', result.data.user);
 
@@ -381,20 +379,54 @@ const Navbar = {
 
             Helpers.UI.showToast(errorMessage, CONSTANTS.TOAST_TYPES.ERROR);
         } finally {
-            // Reset button state
             submitBtn.textContent = originalText;
             submitBtn.disabled = false;
+            submitBtn.classList.remove('loading');
         }
     },
 
-    // Logout user - REAL API CALL
+    clearFormErrors(form) {
+        const formGroups = form.querySelectorAll('.form-group');
+        formGroups.forEach(group => {
+            group.classList.remove('error', 'success');
+        });
+
+        const errorMessages = form.querySelectorAll('.form-error');
+        errorMessages.forEach(message => {
+            message.style.display = 'none';
+        });
+    },
+
+    showFormErrors(form, errors) {
+        Object.keys(errors).forEach(fieldName => {
+            if (errors[fieldName]) {
+                const input = form.querySelector(`[name="${fieldName}"]`);
+                if (input) {
+                    const formGroup = input.closest('.form-group');
+                    if (formGroup) {
+                        formGroup.classList.add('error');
+
+                        let errorElement = formGroup.querySelector('.form-error');
+                        if (!errorElement) {
+                            errorElement = document.createElement('div');
+                            errorElement.className = 'form-error';
+                            formGroup.appendChild(errorElement);
+                        }
+
+                        errorElement.textContent = errors[fieldName];
+                        errorElement.style.display = 'block';
+                    }
+                }
+            }
+        });
+    },
+
     async logout() {
         const token = Storage.Auth.getToken();
 
         try {
-            // Call logout API
             if (token) {
-                await fetch(`${CONFIG.API.BASE_URL}/auth/logout`, {
+                await fetch(`${CONFIG.API.BASE_URL}${CONFIG.API.ENDPOINTS.AUTH.LOGOUT}`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -404,19 +436,14 @@ const Navbar = {
             }
         } catch (error) {
             console.error('Logout API error:', error);
-            // Continue with local logout even if API fails
         }
 
-        // ДОБАВЛЕНО: Очищаем персональное избранное при выходе
         Storage.Favorites.clear();
 
-        // Clear local auth data
         this.clearAuthData();
         this.navigateTo('home');
 
-        // ДОБАВЛЕНО: Обновляем UI избранного после logout
         if (window.VenueCard) {
-            // Обновляем все кнопки избранного на странице
             const favoriteButtons = document.querySelectorAll('.favorite-btn, .event-favorite-btn');
             favoriteButtons.forEach(btn => {
                 btn.classList.remove('active');
@@ -430,31 +457,12 @@ const Navbar = {
         Helpers.UI.showToast('Logged out successfully! 👋', CONSTANTS.TOAST_TYPES.SUCCESS);
     },
 
-    // Close modal
     closeModal() {
         const modal = Helpers.DOM.get('venue-modal');
         if (modal) {
             modal.style.display = 'none';
         }
     },
-
-    // Page navigation methods
-    showHomePage() {
-        Router.navigateToRoute('home');
-    },
-
-    showEventsPage() {
-        Router.navigateToRoute('events');
-    },
-
-    showSocialPage() {
-        Router.navigateToRoute('social');
-    },
-
-    showProfilePage() {
-        Router.navigateToRoute('profile');
-    }
 };
 
-// Make Navbar globally available
 window.Navbar = Navbar;

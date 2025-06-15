@@ -1,12 +1,9 @@
-// Обновленный SearchFilters компонент с выпадающими фильтрами
 const SearchFilters = {
-    // Состояние фильтров
     state: {
         isExpanded: false,
         hasActiveFilters: false
     },
 
-    // Initialize search component
     init() {
         this.render();
         this.bindEvents();
@@ -15,7 +12,6 @@ const SearchFilters = {
         console.log('🛤️ SearchFilters initialized');
     },
 
-    // Render search form with collapsible filters
     render() {
         const container = Helpers.DOM.get('search-container');
         if (!container) return;
@@ -24,7 +20,6 @@ const SearchFilters = {
             <div class="search-form">
                 <h2>What are you looking for?</h2>
                 
-                <!-- Main Search Bar -->
                 <div class="main-search-container">
                     <div class="search-input-group">
                         <input type="text" 
@@ -38,7 +33,6 @@ const SearchFilters = {
                         </button>
                     </div>
                     
-                    <!-- Filters Toggle Button -->
                     <button type="button" class="filters-toggle-btn" id="filters-toggle">
                         <span class="toggle-icon">⚙️</span>
                         <span class="toggle-text">Filters</span>
@@ -47,7 +41,6 @@ const SearchFilters = {
                     </button>
                 </div>
 
-                <!-- Collapsible Filters Panel -->
                 <div class="filters-panel" id="filters-panel">
                     <form id="venue-search-form" class="filters-form-container">
                         <div class="filters-grid">
@@ -105,7 +98,6 @@ const SearchFilters = {
                     </form>
                 </div>
                 
-                <!-- Quick Filter Tags (Always Visible) -->
                 <div class="quick-filters">
                     <div class="filter-tags">
                         <button class="filter-tag" data-type="bar">🍺 Bars</button>
@@ -120,7 +112,6 @@ const SearchFilters = {
         `;
     },
 
-    // Bind event listeners
     bindEvents() {
         const form = Helpers.DOM.get('venue-search-form');
         const searchInput = Helpers.DOM.get('search-query');
@@ -130,21 +121,18 @@ const SearchFilters = {
         const filtersToggle = Helpers.DOM.get('filters-toggle');
         const filterTags = document.querySelectorAll('.filter-tag');
 
-        // Toggle filters panel
         if (filtersToggle) {
             filtersToggle.addEventListener('click', () => {
                 this.toggleFiltersPanel();
             });
         }
 
-        // Main search button
         if (mainSearchBtn) {
             mainSearchBtn.addEventListener('click', () => {
                 this.performSearch();
             });
         }
 
-        // Search form submission
         if (form) {
             form.addEventListener('submit', (e) => {
                 e.preventDefault();
@@ -152,7 +140,6 @@ const SearchFilters = {
             });
         }
 
-        // Apply filters button
         if (applyBtn) {
             applyBtn.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -161,14 +148,12 @@ const SearchFilters = {
             });
         }
 
-        // Clear filters
         if (clearBtn) {
             clearBtn.addEventListener('click', () => {
                 this.clearFilters();
             });
         }
 
-        // Real-time search with debounce
         if (searchInput) {
             searchInput.addEventListener('input',
                 Helpers.Utils.debounce(() => {
@@ -176,7 +161,6 @@ const SearchFilters = {
                 }, CONFIG.APP.DEBOUNCE_DELAY)
             );
 
-            // Enter key для основного поиска
             searchInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
                     e.preventDefault();
@@ -185,14 +169,12 @@ const SearchFilters = {
             });
         }
 
-        // Quick filter tags
         filterTags.forEach(tag => {
             tag.addEventListener('click', () => {
                 this.applyQuickFilter(tag);
             });
         });
 
-        // Filter change events для обновления индикатора
         const filterSelects = form?.querySelectorAll('select');
         filterSelects?.forEach(select => {
             select.addEventListener('change', () => {
@@ -201,7 +183,6 @@ const SearchFilters = {
             });
         });
 
-        // Close filters when clicking outside
         document.addEventListener('click', (e) => {
             const filtersPanel = Helpers.DOM.get('filters-panel');
             const filtersToggle = Helpers.DOM.get('filters-toggle');
@@ -215,7 +196,6 @@ const SearchFilters = {
         });
     },
 
-    // Toggle filters panel
     toggleFiltersPanel() {
         const panel = Helpers.DOM.get('filters-panel');
         const arrow = Helpers.DOM.get('expand-arrow');
@@ -236,7 +216,6 @@ const SearchFilters = {
         }
     },
 
-    // Update filter indicator
     updateFilterIndicator() {
         const filters = this.getCurrentFilters();
         const activeCount = Object.values(filters).filter(value => value && value !== filters.query).length;
@@ -257,7 +236,6 @@ const SearchFilters = {
         }
     },
 
-    // Perform search with current filters
     async performSearch() {
         const searchQuery = Helpers.DOM.get('search-query').value || '';
         const form = Helpers.DOM.get('venue-search-form');
@@ -265,7 +243,6 @@ const SearchFilters = {
 
         const formData = new FormData(form);
 
-        // Добавляем query из основного поля поиска
         const filters = {
             query: searchQuery,
             type: formData.get('type') || '',
@@ -273,7 +250,6 @@ const SearchFilters = {
             priceRange: formData.get('priceRange') || ''
         };
 
-        // Show loading state
         const searchBtn = document.querySelector('.search-btn-main');
         const applyBtn = document.querySelector('.apply-filters-btn');
 
@@ -288,22 +264,18 @@ const SearchFilters = {
         }
 
         try {
-            // Apply filters through App
             if (window.App) {
                 await App.applyFilters(filters);
             }
 
-            // Update URL with search params
             this.updateURL(filters);
 
-            // Update filter indicator
             this.updateFilterIndicator();
 
         } catch (error) {
             console.error('Search failed:', error);
             Helpers.UI.showToast('Search failed. Please try again.', CONSTANTS.TOAST_TYPES.ERROR);
         } finally {
-            // Reset button states
             if (searchBtn) {
                 searchBtn.textContent = '🔍 Search';
                 searchBtn.disabled = false;
@@ -316,7 +288,6 @@ const SearchFilters = {
         }
     },
 
-    // Clear all filters
     clearFilters() {
         const form = Helpers.DOM.get('venue-search-form');
         const searchInput = Helpers.DOM.get('search-query');
@@ -324,15 +295,12 @@ const SearchFilters = {
         if (form) form.reset();
         if (searchInput) searchInput.value = '';
 
-        // Clear search through App
         if (window.App) {
             App.clearFilters();
         }
 
-        // Update indicator
         this.updateFilterIndicator();
 
-        // Close filters panel
         if (this.state.isExpanded) {
             this.toggleFiltersPanel();
         }
@@ -340,13 +308,11 @@ const SearchFilters = {
         Helpers.UI.showToast('Filters cleared', CONSTANTS.TOAST_TYPES.SUCCESS);
     },
 
-    // Apply quick filter
     applyQuickFilter(tag) {
         const type = tag.dataset.type;
         const district = tag.dataset.district;
         const price = tag.dataset.price;
 
-        // Update form fields
         if (type) {
             const typeSelect = Helpers.DOM.get('venue-type');
             if (typeSelect) typeSelect.value = type;
@@ -362,15 +328,12 @@ const SearchFilters = {
             if (priceSelect) priceSelect.value = price;
         }
 
-        // Perform search with new filters
         this.performSearch();
 
-        // Visual feedback
         tag.classList.add('active');
         setTimeout(() => tag.classList.remove('active'), 2000);
     },
 
-    // Update URL with search parameters
     updateURL(filters) {
         const params = new URLSearchParams();
 
@@ -387,7 +350,6 @@ const SearchFilters = {
         window.history.replaceState({}, '', newURL);
     },
 
-    // Load filters from URL
     loadFiltersFromURL() {
         const params = new URLSearchParams(window.location.search);
         const form = Helpers.DOM.get('venue-search-form');
@@ -395,7 +357,6 @@ const SearchFilters = {
 
         if (!form) return;
 
-        // Set form values from URL params
         params.forEach((value, key) => {
             if (key === 'query') {
                 if (searchInput) searchInput.value = value;
@@ -405,16 +366,13 @@ const SearchFilters = {
             }
         });
 
-        // Update filter indicator
         this.updateFilterIndicator();
 
-        // Perform search if there are filters
         if (params.toString()) {
             this.performSearch();
         }
     },
 
-    // Get current filters
     getCurrentFilters() {
         const searchInput = Helpers.DOM.get('search-query');
         const form = Helpers.DOM.get('venue-search-form');
@@ -431,5 +389,4 @@ const SearchFilters = {
     }
 };
 
-// Make SearchFilters globally available
 window.SearchFilters = SearchFilters;
