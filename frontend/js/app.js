@@ -31,8 +31,6 @@ const App = {
 
         this.bindGlobalEvents();
 
-        // this.setupViewControls();
-
         console.log('✅ Application initialized successfully!');
     },
 
@@ -333,66 +331,6 @@ const App = {
                     modal.style.display = 'none';
                 }
             });
-        }
-    },
-
-    // setupViewControls() {
-    //     const viewButtons = document.querySelectorAll('.view-btn');
-    //
-    //     viewButtons.forEach(btn => {
-    //         btn.addEventListener('click', () => {
-    //             viewButtons.forEach(b => b.classList.remove('active'));
-    //             btn.classList.add('active');
-    //
-    //             const view = btn.dataset.view;
-    //             this.changeView(view);
-    //         });
-    //     });
-    //
-    //     const loadMoreBtn = Helpers.DOM.get('load-more-btn');
-    //     if (loadMoreBtn) {
-    //         loadMoreBtn.addEventListener('click', () => {
-    //             this.loadMoreVenues();
-    //         });
-    //     }
-    // },
-    //
-    // changeView(viewType) {
-    //     const container = Helpers.DOM.get('results-container');
-    //     if (!container) return;
-    //
-    //     container.classList.remove('grid-view', 'list-view', 'map-view');
-    //     container.classList.add(`${viewType}-view`);
-    //     //
-    //     // if (viewType === 'list') {
-    //     //     Helpers.UI.showToast('List view - Coming soon!', CONSTANTS.TOAST_TYPES.INFO);
-    //     // } else if (viewType === 'map') {
-    //     //     Helpers.UI.showToast('Map view - Coming soon!', CONSTANTS.TOAST_TYPES.INFO);
-    //     // }
-    // },
-
-    async loadMoreVenues() {
-        if (!this.state.pagination.hasMore || this.state.isLoading) {
-            return;
-        }
-
-        this.state.pagination.page++;
-        this.state.isLoading = true;
-
-        const loadMoreBtn = Helpers.DOM.get('load-more-btn');
-        if (loadMoreBtn) {
-            loadMoreBtn.textContent = 'Loading...';
-            loadMoreBtn.disabled = true;
-        }
-
-        try {
-            await this.loadVenues(true);
-        } finally {
-            this.state.isLoading = false;
-            if (loadMoreBtn) {
-                loadMoreBtn.textContent = 'Load More';
-                loadMoreBtn.disabled = false;
-            }
         }
     },
 

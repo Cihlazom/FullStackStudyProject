@@ -1,6 +1,6 @@
 const CONFIG = {
     API: {
-        BASE_URL: 'http://localhost/FullStackStudyProject/backend/api',
+        BASE_URL: 'https://g0725.pawa.com.es/backend/api',
         ENDPOINTS: {
             AUTH: {
                 LOGIN: '/auth/login',

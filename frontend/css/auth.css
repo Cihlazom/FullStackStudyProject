@@ -277,7 +277,7 @@
 
 .strength-fill.medium {
     width: 75%;
-    background: var(--primary-color);
+    background: var(--warning2-color);
 }
 
 .strength-fill.strong {

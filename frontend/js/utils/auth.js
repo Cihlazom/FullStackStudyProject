@@ -138,8 +138,8 @@ const AuthUtils = {
                 textElement.textContent = `Password strength: ${result.strength}`;
             }
 
-            if (feedbackElement && result.feedback) {
-                feedbackElement.textContent = `Feedback:${result.feedback}`;
+            if (feedbackElement) {
+                feedbackElement.textContent = result.feedback.length ? `Feedback:${result.feedback}` : '';
             }
         });
     },

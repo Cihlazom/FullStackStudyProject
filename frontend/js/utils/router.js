@@ -240,10 +240,6 @@ const Router = {
         if (window.SearchFilters) {
           SearchFilters.init();
         }
-
-        // if (window.App && App.setupViewControls) {
-        //   App.setupViewControls();
-        // }
       },
 
       bindProfilePageEvents() {
